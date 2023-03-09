@@ -206,7 +206,10 @@ public class PacketJoinGame implements PacketOut {
             msg.writeByte(gameMode);
             msg.writeByte(previousGameMode);
             msg.writeStringsArray(worldNames);
-            if (version.moreOrEqual(Version.V1_19_1)) {
+            if (version.moreOrEqual(Version.V1_19_4)) {
+                msg.writeCompoundTag(dimensionRegistry.getCodec_1_19_4());
+            }
+            else (version.moreOrEqual(Version.V1_19_1)) {
                 msg.writeCompoundTag(dimensionRegistry.getCodec_1_19_1());
             }
             else {
