@@ -38,6 +38,7 @@ public final class DimensionRegistry {
     private CompoundBinaryTag codec_1_18_2;
     private CompoundBinaryTag codec_1_19;
     private CompoundBinaryTag codec_1_19_1;
+    private CompoundBinaryTag codec_1_19_4;
     private CompoundBinaryTag oldCodec;
 
     public DimensionRegistry(LimboServer server) {
