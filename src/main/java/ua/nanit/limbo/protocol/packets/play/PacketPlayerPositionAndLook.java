@@ -59,7 +59,7 @@ public class PacketPlayerPositionAndLook implements PacketOut {
             msg.writeVarInt(teleportId);
         }
 
-        if (version.moreOrEqual(Version.V1_17) && version.less(Version.V1_19_4)) {
+        if (version.fromTo(Version.V1_17, Version.V1_19_3)) {
             msg.writeBoolean(false); // Dismount vehicle
         }
     }
