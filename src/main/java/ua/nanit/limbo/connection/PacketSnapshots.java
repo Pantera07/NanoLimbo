@@ -95,7 +95,7 @@ public final class PacketSnapshots {
         PacketPlayerPositionAndLook positionAndLook
                 = new PacketPlayerPositionAndLook(0, 64, 0, 0, 0, teleportId);
 
-        PacketSpawnPosition packetSpawnPosition = new PacketSpawnPosition(0, 64, 0);
+        PacketSpawnPosition packetSpawnPosition = new PacketSpawnPosition(0, 400, 0);
 
         PacketDeclareCommands declareCommands = new PacketDeclareCommands();
         declareCommands.setCommands(Collections.emptyList());
