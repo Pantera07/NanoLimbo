@@ -138,7 +138,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
                 writePacket(PacketSnapshots.PACKET_PLAYER_POS_AND_LOOK);
             }
 
-            if (clientVersion.moreOrEqual(Version.V1_19_3))
+            if (clientVersion.moreOrEqual(Version.V1_18_2))
                 writePacket(PacketSnapshots.PACKET_SPAWN_POSITION);
 
             if (server.getConfig().isUsePlayerList() || clientVersion.equals(Version.V1_16_4))
