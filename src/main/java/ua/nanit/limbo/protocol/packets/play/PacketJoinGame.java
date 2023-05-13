@@ -235,7 +235,7 @@ public class PacketJoinGame implements PacketOut {
             msg.writeByte(gameMode);
             msg.writeByte(previousGameMode);
             msg.writeStringsArray(worldNames);
-            msg.writeCompoundTag(dimensionRegistry.getCodec_1_19_4());
+            msg.writeCompoundTag(dimensionRegistry.getCodec_1_20());
             msg.writeString(worldName); // World type
             msg.writeString(worldName);
             msg.writeLong(hashedSeed);
