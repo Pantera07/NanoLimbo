@@ -445,6 +445,15 @@
                 }
             },
             {
+                name: "minecraft:generic_kill",
+                id: 16,
+                element: {
+                    scaling: "when_caused_by_living_non_player",
+                    exhaustion: 0.0f,
+                    message_id: "genericKill"
+                }
+            },
+            {
                 name: "minecraft:hot_floor",
                 id: 17,
                 element: {
@@ -554,6 +563,15 @@
                     scaling: "when_caused_by_living_non_player",
                     exhaustion: 0.0f,
                     message_id: "outOfWorld"
+                }
+            },
+            {
+                name: "minecraft:outside_border",
+                id: 28,
+                element: {
+                    scaling: "when_caused_by_living_non_player",
+                    exhaustion: 0.0f,
+                    message_id: "outsideBorder"
                 }
             },
             {
