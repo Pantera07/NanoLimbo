@@ -135,8 +135,8 @@ public final class LimboConfig {
 
         useTrafficLimits = conf.node("traffic", "enable").getBoolean(false);
         maxPacketSize = conf.node("traffic", "packetSize").getInt(-1);
-        maxPacketsPerInterval = conf.node("traffic", "max-packet-rate").getDouble(-1.0);
         interval = conf.node("traffic", "interval").getDouble(-1.0);
+        maxPacketsPerInterval = conf.node("traffic", "max-packet-rate").getDouble(-1.0);
     }
 
     private BufferedReader getReader() throws IOException {
