@@ -38,7 +38,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             globalPacketCounter.updateAndAdd(1, currentTime);
             if (globalPacketCounter.getRate() > maxPacketsPerInterval) {
             double spamPackets = globalPacketCounter.getRate();
-            closeConnection(ctx, "Closed %s due to many packets sent (%.2f per second)", ctx.channel().remoteAddress(), spamPackets);
+            closeConnection(ctx, "Closed %s due to many packets sent (%.2f per sec)", ctx.channel().remoteAddress(), spamPackets);
                 return;
             }
         }
