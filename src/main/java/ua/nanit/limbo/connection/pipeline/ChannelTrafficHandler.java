@@ -15,10 +15,10 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
     private final double maxPacketsPerInterval;
     private final IntervalCounter globalPacketCounter;
 
-    public ChannelTrafficHandler(int packetSize, double maxPacketsPerInterval, double interval) {
+    public ChannelTrafficHandler(int packetSize, double interval, double maxPacketsPerInterval) {
         this.packetSize = packetSize;
-        this.maxPacketsPerInterval = maxPacketsPerInterval;
         this.interval = interval * NANO_IN_SEC;
+        this.maxPacketsPerInterval = maxPacketsPerInterval;
         this.globalPacketCounter = new IntervalCounter(this.interval);
     }
 
@@ -29,7 +29,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             int bytes = in.readableBytes();
 
             if (packetSize > 0 && bytes > packetSize) {
-                closeConnection(ctx, "Closed %s due too large packet size (%d bytes)", ctx.channel().remoteAddress(), bytes);
+                closeConnection(ctx, "Closed %s due to large packet size (%d bytes)", ctx.channel().remoteAddress(), bytes);
                 return;
             }
 
@@ -38,7 +38,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             globalPacketCounter.updateAndAdd(1, currentTime);
             if (globalPacketCounter.getRate() > maxPacketsPerInterval) {
             double spamPackets = globalPacketCounter.getRate();
-            closeConnection(ctx, "Closed %s due to too many packets sent (%.2f per interval)", ctx.channel().remoteAddress(), spamPackets);
+            closeConnection(ctx, "Closed %s due to many packets sent (%.2f per interval)", ctx.channel().remoteAddress(), spamPackets);
                 return;
             }
         }
