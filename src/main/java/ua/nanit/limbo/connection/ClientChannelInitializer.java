@@ -50,8 +50,8 @@ public class ClientChannelInitializer extends ChannelInitializer<Channel> {
         if (server.getConfig().isUseTrafficLimits()) {
             pipeline.addLast("traffic_limit", new ChannelTrafficHandler(
                     server.getConfig().getMaxPacketSize(),
-                    server.getConfig().getMaxPacketsPerInterval(),
-                    server.getConfig().getInterval()
+                    server.getConfig().getInterval(),
+                    server.getConfig().getMaxPacketsPerInterval()
             ));
         }
 
