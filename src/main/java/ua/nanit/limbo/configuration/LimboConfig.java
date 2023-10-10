@@ -73,8 +73,8 @@ public final class LimboConfig {
 
     private boolean useTrafficLimits;
     private int maxPacketSize;
-    private double maxPacketsPerInterval;
     private double interval;
+    private double maxPacketsPerInterval;
 
     public LimboConfig(Path root) {
         this.root = root;
@@ -269,12 +269,12 @@ public final class LimboConfig {
         return maxPacketSize;
     }
 
-    public double getMaxPacketsPerInterval() {
-        return maxPacketsPerInterval;
-    }
-
     public double getInterval() {
         return interval;
+    }
+
+    public double getMaxPacketsPerInterval() {
+        return maxPacketsPerInterval;
     }
 }
 
