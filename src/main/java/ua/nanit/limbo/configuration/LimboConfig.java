@@ -273,7 +273,7 @@ public final class LimboConfig {
         return interval;
     }
 
-    public double getmaxPacketRate() {
+    public double getMaxPacketRate() {
         return maxPacketRate;
     }
 }
