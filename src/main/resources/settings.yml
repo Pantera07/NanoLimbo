@@ -122,7 +122,7 @@ traffic:
   enable: false
   # Max packet size in bytes
   # Unlimited if -1
-  packetSize: 4096
+  packetSize: 8192
   # The interval to measure packets over
   # Lowering this value will limit peak packets from players which would target people with bad connections
   # Raising this value will allow higher peak packet rates, which will help with people who have poor connections
