@@ -74,7 +74,7 @@ public final class LimboConfig {
     private boolean useTrafficLimits;
     private int maxPacketSize;
     private double interval;
-    private double maxPacketsPerInterval;
+    private double maxPacketRate;
 
     public LimboConfig(Path root) {
         this.root = root;
@@ -136,7 +136,7 @@ public final class LimboConfig {
         useTrafficLimits = conf.node("traffic", "enable").getBoolean(false);
         maxPacketSize = conf.node("traffic", "packetSize").getInt(-1);
         interval = conf.node("traffic", "interval").getDouble(-1.0);
-        maxPacketsPerInterval = conf.node("traffic", "max-packet-rate").getDouble(-1.0);
+        maxPacketRate = conf.node("traffic", "max-packet-rate").getDouble(-1.0);
     }
 
     private BufferedReader getReader() throws IOException {
@@ -273,8 +273,8 @@ public final class LimboConfig {
         return interval;
     }
 
-    public double getMaxPacketsPerInterval() {
-        return maxPacketsPerInterval;
+    public double getmaxPacketRate() {
+        return maxPacketRate;
     }
 }
 
