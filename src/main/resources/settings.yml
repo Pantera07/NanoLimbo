@@ -123,9 +123,12 @@ traffic:
   # Max packet size in bytes
   # Unlimited if -1
   packetSize: 4096
-  # Duration (in seconds) to measure packet rate
+  # The interval to measure packets over
+  # Lowering this value will limit peak packets from players which would target people with bad connections
+  # Raising this value will allow higher peak packet rates, which will help with people who have poor connections
   # Ignored if -1
   interval: 7.0
-  # Max packets a connection can send within the "interval"
+  # The maximum maximum packets per second for players
+  # It is measured over the configured interval
   # Ignored if -1
   max-packet-rate: 500.0
