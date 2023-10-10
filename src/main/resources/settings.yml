@@ -118,15 +118,14 @@ netty:
 # Options to check incoming traffic and kick potentially malicious connections.
 # Take into account that player can send many small packets, for example just moving mouse.
 traffic:
-  # If true, then additional handler will be added to channel pipeline
+  # If set to true, an additional handler will be added to the channel pipeline to monitor traffic.
   enable: false
-  # Maximum allowed packet size in bytes. Connections sending larger packets will be disconnected.
-  # Set to -1 for unlimited packet size.
+  # Max packet size in bytes
+  # Unlimited if -1
   packetSize: 4096
-  # Maximum allowed packet rate (packets per interval) for a single connection.
-  # Ignored (i.e., unlimited) if set to -1.
-  max-packet-rate: 500.0
-  # Interval (in seconds) over which the packet rate is measured.
-  # For instance, if set to 7.0, the system checks if a connection sends more than the "max-packet-rate" in any 7-second window.
-  # Ignored if set to -1.
+  # Duration (in seconds) to measure packet rate
+  # Ignored if -1
   interval: 7.0
+  # Max packets a connection can send within the "interval"
+  # Ignored if -1
+  max-packet-rate: 500.0
