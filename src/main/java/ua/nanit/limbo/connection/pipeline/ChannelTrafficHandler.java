@@ -6,21 +6,26 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import ua.nanit.limbo.server.Logger;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
+    private static final long NANO_IN_SEC = 1_000_000_000L;
+
     private final int packetSize;
-    private final int packetsPerSec;
-    private final int bytesPerSec;
+    private final double maxPacketsPerInterval;
+    private final double interval;
+    private final Map<Class<?>, IntervalCounter> specificPacketCounters = new HashMap<>();
 
-    private int packetsCounter;
-    private int bytesCounter;
+    private IntervalCounter globalPacketCounter;
 
-    private long lastPacket;
-
-    public ChannelTrafficHandler(int packetSize, int packetsPerSec, int bytesPerSec) {
+    public ChannelTrafficHandler(int packetSize, double maxPacketsPerInterval, double interval) {
         this.packetSize = packetSize;
-        this.packetsPerSec = packetsPerSec;
-        this.bytesPerSec = bytesPerSec;
+        this.maxPacketsPerInterval = maxPacketsPerInterval;
+        this.interval = interval * NANO_IN_SEC;
+
+        this.globalPacketCounter = new IntervalCounter(interval);
     }
 
     @Override
@@ -30,46 +35,48 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             int bytes = in.readableBytes();
 
             if (packetSize > 0 && bytes > packetSize) {
-                closeConnection(ctx, "Closed %s due too large packet size (%d bytes)", ctx.channel().remoteAddress(), bytes);
+                closeConnection(ctx, "Closed %s due to large packet size (%d bytes)", ctx.channel().remoteAddress(), bytes);
                 return;
             }
 
-            if (!measureTraffic(ctx, bytes)) return;
+            long currentTime = System.nanoTime();
+
+            globalPacketCounter.updateAndAdd(1, currentTime);
+            if (globalPacketCounter.getRate() > maxPacketsPerInterval) {
+                closeConnection(ctx, "Closed %s due to packet spamming", ctx.channel().remoteAddress());
+                return;
+            }
+
+            // Further logic for specific packet types can be added similarly
         }
 
         super.channelRead(ctx, msg);
     }
 
-    private boolean measureTraffic(ChannelHandlerContext ctx, int bytes) {
-        if (packetsPerSec < 0 && bytesPerSec < 0) return true;
-
-        long time = System.currentTimeMillis();
-
-        if (time - lastPacket >= 1000) {
-            bytesCounter = 0;
-            packetsCounter = 0;
-        }
-
-        packetsCounter++;
-        bytesCounter += bytes;
-
-        if (packetsPerSec > 0 && packetsCounter > packetsPerSec) {
-            closeConnection(ctx, "Closed %s due too frequent packet sending (%d per sec)", ctx.channel().remoteAddress(), packetsCounter);
-            return false;
-        }
-
-        if (bytesPerSec > 0 && bytesCounter > bytesPerSec) {
-            closeConnection(ctx, "Closed %s due too many bytes sent per second (%d per sec)", ctx.channel().remoteAddress(), bytesCounter);
-            return false;
-        }
-
-        lastPacket = time;
-
-        return true;
-    }
-
     private void closeConnection(ChannelHandlerContext ctx, String reason, Object... args) {
         ctx.close();
         Logger.info(reason, args);
+    }
+
+    private static class IntervalCounter {
+        private final long interval;
+        private long lastTime;
+        private int count;
+
+        public IntervalCounter(double interval) {
+            this.interval = (long) (interval * NANO_IN_SEC);
+        }
+
+        public void updateAndAdd(int increment, long currentTime) {
+            if (currentTime - lastTime > interval) {
+                count = 0;
+                lastTime = currentTime;
+            }
+            count += increment;
+        }
+
+        public double getRate() {
+            return count / (double) interval * NANO_IN_SEC;
+        }
     }
 }
