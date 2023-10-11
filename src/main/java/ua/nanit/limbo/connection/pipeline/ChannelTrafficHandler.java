@@ -15,7 +15,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
     public ChannelTrafficHandler(int maxPacketSize, double interval, double maxPacketRate) {
         this.maxPacketSize = maxPacketSize;
         this.maxPacketRate = maxPacketRate;
-        this.packetBucket = new PacketBucket(interval * 1_000.0, 150); // Assuming interval is in seconds, convert to ms for PacketBucket
+        this.packetBucket = new PacketBucket(interval * 1_000.0, 150);
     }
 
     @Override
