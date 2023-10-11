@@ -118,11 +118,11 @@ netty:
 # Options to check incoming traffic and kick potentially malicious connections.
 # Take into account that player can send many small packets, for example just moving mouse.
 traffic:
-  # If set to true, an additional handler will be added to the channel pipeline to monitor traffic.
+  # If true, then additional handler will be added to channel pipeline
   enable: false
   # Max packet size in bytes
   # Unlimited if -1
-  packetSize: 8192
+  packetSize: 4096
   # The interval to measure packets over
   # Lowering this value will limit peak packets from players which would target people with bad connections
   # Raising this value will allow higher peak packet rates, which will help with people who have poor connections
