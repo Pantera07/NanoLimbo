@@ -66,6 +66,10 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             double timeMs = System.nanoTime() * NANOSECONDS_TO_MILLISECONDS;
             double timeDelta = timeMs - this.lastBucketTime;
 
+            if (timeDelta < 0.0) {
+                timeDelta = 0.0;
+            }
+
             if (timeDelta < this.intervalResolution) {
                 this.data[this.newestData] += packets;
                 this.sum += packets;
@@ -76,9 +80,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             double nextBucketTime = this.lastBucketTime + bucketsToMove * this.intervalResolution;
 
             if (bucketsToMove >= this.data.length) {
-                for (int i = 0; i < this.data.length; i++) {
-                    this.data[i] = 0;
-                }
+                Arrays.fill(this.data, 0);
                 this.data[0] = packets;
                 this.sum = packets;
                 this.newestData = 0;
