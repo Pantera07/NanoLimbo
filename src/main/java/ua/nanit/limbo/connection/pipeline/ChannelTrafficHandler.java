@@ -8,18 +8,14 @@ import ua.nanit.limbo.server.Logger;
 
 public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
-    private static final long NANO_IN_SEC = 1_000_000_000L;
-
     private final int packetSize;
-    private final double interval;
     private final double maxPacketRate;
-    private final IntervalCounter globalPacketCounter;
+    private final PacketBucket packetBucket;
 
     public ChannelTrafficHandler(int packetSize, double interval, double maxPacketRate) {
         this.packetSize = packetSize;
-        this.interval = interval * NANO_IN_SEC;
         this.maxPacketRate = maxPacketRate;
-        this.globalPacketCounter = new IntervalCounter(this.interval);
+        this.packetBucket = new PacketBucket(interval * 1_000.0, 150); // Assuming interval is in seconds, convert to ms for PacketBucket
     }
 
     @Override
@@ -33,15 +29,11 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            long currentTime = System.nanoTime();
+            packetBucket.incrementPackets(1);
 
-            if (interval > 0 && maxPacketRate > 0) {
-                globalPacketCounter.updateAndAdd(1, currentTime);
-                if (globalPacketCounter.getRate() > maxPacketRate) {
-                    double spamPackets = globalPacketCounter.getRate();
-                    closeConnection(ctx, "Closed %s due to many packets sent (%.2f per sec)", ctx.channel().remoteAddress(), spamPackets);
-                    return;
-                }
+            if (packetBucket.getCurrentPacketRate() > maxPacketRate) {
+                closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.2f seconds)", ctx.channel().remoteAddress(), packetBucket.sum, (packetBucket.intervalTime / 1000.0));
+                return;
             }
         }
 
@@ -53,25 +45,62 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
         Logger.info(reason, args);
     }
 
-    private static class IntervalCounter {
-        private final long interval;
-        private long lastTime;
-        private int count;
+    private static class PacketBucket {
+        private static final double NANOSECONDS_TO_MILLISECONDS = 1.0e-6;
+        private static final int MILLISECONDS_TO_SECONDS = 1000;
 
-        public IntervalCounter(double interval) {
-            this.interval = (long) interval;
+        private final double intervalTime;
+        private final double intervalResolution;
+        private final int[] data;
+        private int newestData;
+        private double lastBucketTime;
+        private int sum;
+
+        public PacketBucket(final double intervalTime, final int totalBuckets) {
+            this.intervalTime = intervalTime;
+            this.intervalResolution = intervalTime / totalBuckets;
+            this.data = new int[totalBuckets];
         }
 
-        public void updateAndAdd(int increment, long currentTime) {
-            if (currentTime - lastTime > interval) {
-                count = 0;
-                lastTime = currentTime;
+        public void incrementPackets(final int packets) {
+            double timeMs = System.nanoTime() * NANOSECONDS_TO_MILLISECONDS;
+            double timeDelta = timeMs - this.lastBucketTime;
+
+            if (timeDelta < this.intervalResolution) {
+                this.data[this.newestData] += packets;
+                this.sum += packets;
+                return;
             }
-            count += increment;
+
+            int bucketsToMove = (int)(timeDelta / this.intervalResolution);
+            double nextBucketTime = this.lastBucketTime + bucketsToMove * this.intervalResolution;
+
+            if (bucketsToMove >= this.data.length) {
+                for (int i = 0; i < this.data.length; i++) {
+                    this.data[i] = 0;
+                }
+                this.data[0] = packets;
+                this.sum = packets;
+                this.newestData = 0;
+                this.lastBucketTime = timeMs;
+                return;
+            }
+
+            for (int i = 1; i < bucketsToMove; ++i) {
+                int index = (this.newestData + i) % this.data.length;
+                this.sum -= this.data[index];
+                this.data[index] = 0;
+            }
+
+            int newestDataIndex = (this.newestData + bucketsToMove) % this.data.length;
+            this.sum += packets - this.data[newestDataIndex];
+            this.data[newestDataIndex] = packets;
+            this.newestData = newestDataIndex;
+            this.lastBucketTime = nextBucketTime;
         }
 
-        public double getRate() {
-            return (double) count / interval * NANO_IN_SEC;
+        public double getCurrentPacketRate() {
+            return this.sum / (this.intervalTime / MILLISECONDS_TO_SECONDS);
         }
     }
 }
