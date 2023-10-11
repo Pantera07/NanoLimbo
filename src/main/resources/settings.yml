@@ -126,9 +126,9 @@ traffic:
   # The interval to measure packets over
   # Lowering this value will limit peak packets from players which would target people with bad connections
   # Raising this value will allow higher peak packet rates, which will help with people who have poor connections
-  # Ignored if -1
+  # Ignored if -1.0
   interval: 7.0
   # The maximum maximum packets per second for players
   # It is measured over the configured interval
-  # Ignored if -1
+  # Ignored if -1.0
   maxPacketRate: 500.0
