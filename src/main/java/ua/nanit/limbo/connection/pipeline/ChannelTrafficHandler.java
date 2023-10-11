@@ -8,12 +8,12 @@ import ua.nanit.limbo.server.Logger;
 
 public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
-    private final int packetSize;
+    private final int maxPacketSize;
     private final double maxPacketRate;
     private final PacketBucket packetBucket;
 
-    public ChannelTrafficHandler(int packetSize, double interval, double maxPacketRate) {
-        this.packetSize = packetSize;
+    public ChannelTrafficHandler(int maxPacketSize, double interval, double maxPacketRate) {
+        this.maxPacketSize = maxPacketSize;
         this.maxPacketRate = maxPacketRate;
         this.packetBucket = new PacketBucket(interval * 1_000.0, 150); // Assuming interval is in seconds, convert to ms for PacketBucket
     }
@@ -24,7 +24,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             ByteBuf in = (ByteBuf) msg;
             int bytes = in.readableBytes();
 
-            if (packetSize > 0 && bytes > packetSize) {
+            if (maxPacketSize > 0 && bytes > maxPacketSize) {
                 closeConnection(ctx, "Closed %s due to large packet size (%d bytes)", ctx.channel().remoteAddress(), bytes);
                 return;
             }
