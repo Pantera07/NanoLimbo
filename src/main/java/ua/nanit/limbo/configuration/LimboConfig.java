@@ -134,9 +134,9 @@ public final class LimboConfig {
         workerGroupSize = conf.node("netty", "threads", "workerGroup").getInt(4);
 
         useTrafficLimits = conf.node("traffic", "enable").getBoolean(false);
-        maxPacketSize = conf.node("traffic", "packetSize").getInt(-1);
+        maxPacketSize = conf.node("traffic", "maxPacketSize").getInt(-1);
         interval = conf.node("traffic", "interval").getDouble(-1.0);
-        maxPacketRate = conf.node("traffic", "max-packet-rate").getDouble(-1.0);
+        maxPacketRate = conf.node("traffic", "maxPacketRate").getDouble(-1.0);
     }
 
     private BufferedReader getReader() throws IOException {
