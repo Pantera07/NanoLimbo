@@ -6,6 +6,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import ua.nanit.limbo.server.Logger;
 
+import java.util.Arrays;
+
 public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
     private final int maxPacketSize;
@@ -15,7 +17,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
     public ChannelTrafficHandler(int maxPacketSize, double interval, double maxPacketRate) {
         this.maxPacketSize = maxPacketSize;
         this.maxPacketRate = maxPacketRate;
-        this.packetBucket = new PacketBucket(interval * 1_000.0, 150);
+        this.packetBucket = (interval > 0 && maxPacketRate > 0) ? new PacketBucket(interval * 1_000.0, 150) : null;
     }
 
     @Override
@@ -29,11 +31,12 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            packetBucket.incrementPackets(1);
-
-            if (packetBucket.getCurrentPacketRate() > maxPacketRate) {
-                closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.2f seconds)", ctx.channel().remoteAddress(), packetBucket.sum, (packetBucket.intervalTime / 1000.0));
-                return;
+            if (packetBucket != null) {
+                packetBucket.incrementPackets(1);
+                if (packetBucket.getCurrentPacketRate() > maxPacketRate) {
+                    closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.2f seconds)", ctx.channel().remoteAddress(), packetBucket.sum, (packetBucket.intervalTime / 1000.0));
+                    return;
+                }
             }
         }
 
