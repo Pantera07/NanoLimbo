@@ -108,11 +108,6 @@ public enum State {
             );
 
             serverBound.register(
-                    PacketPluginMessage::new,
-                    map(0x01, V1_20_2, V1_20_3),
-                    map(0x02, V1_20_2, V1_21)
-            );
-            serverBound.register(
                     PacketFinishConfiguration::new,
                     map(0x02, V1_20_2, V1_20_3),
                     map(0x03, V1_20_5, V1_21)
