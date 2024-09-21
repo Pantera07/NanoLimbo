@@ -22,6 +22,7 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
 import net.kyori.adventure.nbt.*;
+import org.jetbrains.annotations.NotNull;
 import ua.nanit.limbo.protocol.registry.Version;
 
 import java.io.IOException;
@@ -107,13 +108,22 @@ public class ByteMessage extends ByteBuf {
         }
     }
 
-    public String readString() {
-        return readString(readVarInt());
+    public @NotNull String readString() throws DecoderException {
+        return readString(Short.MAX_VALUE);
     }
 
-    public String readString(int length) {
-        String str = buf.toString(buf.readerIndex(), length, StandardCharsets.UTF_8);
-        buf.skipBytes(length);
+    public @NotNull String readString(int cap) throws DecoderException {
+        final int length = readVarInt();
+        return readString(cap, length);
+    }
+
+    public @NotNull String readString(int cap, int length) throws DecoderException {
+        if (length < 0) throw new DecoderException("Got a negative-length string");
+        if (length > cap * 3) throw new DecoderException("Bad string size");
+        if (!buf.isReadable(length)) throw new DecoderException("Tried to read a too-long string");
+        final String str = buf.toString(buf.readerIndex(), length, StandardCharsets.UTF_8);
+        buf.readerIndex(buf.readerIndex() + length);
+        if (str.length() > cap) throw new DecoderException("Got a too-long string");
         return str;
     }
 
