@@ -44,8 +44,8 @@ public class PacketLoginStart implements PacketIn {
     public void decode(ByteMessage msg, Version version) {
         this.username = msg.readString();
 
-        if (version.compareTo(Version.V1_19) >= 0) {
-            if (version.compareTo(Version.V1_19_3) < 0) {
+        if (version.moreOrEqual(Version.V1_19)) {
+            if (version.less(Version.V1_19_3)) {
                 if (msg.readBoolean()) {
                     msg.readLong(); // expiry
                     msg.readBytesArray(); // key
@@ -53,12 +53,12 @@ public class PacketLoginStart implements PacketIn {
                 }
             }
 
-            if (version.compareTo(Version.V1_20_2) >= 0) {
+            if (version.moreOrEqual(Version.V1_20_2)) {
                 uuid = msg.readUuid();
                 return;
             }
 
-            if (version.compareTo(Version.V1_19_1) >= 0) {
+            if (version.moreOrEqual(Version.V1_19_1)) {
                 if (msg.readBoolean()) {
                     uuid = msg.readUuid();
                 }
