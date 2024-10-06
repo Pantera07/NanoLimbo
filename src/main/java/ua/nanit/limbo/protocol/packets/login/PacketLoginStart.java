@@ -53,13 +53,8 @@ public class PacketLoginStart implements PacketIn {
                 }
             }
 
-            if (version.moreOrEqual(Version.V1_20_2)) {
-                uuid = msg.readUuid();
-                return;
-            }
-
             if (version.moreOrEqual(Version.V1_19_1)) {
-                if (msg.readBoolean()) {
+                if (version.moreOrEqual(Version.V1_20_2) || msg.readBoolean()) {
                     uuid = msg.readUuid();
                 }
             }
