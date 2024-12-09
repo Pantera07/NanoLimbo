@@ -45,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -179,9 +180,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
             if (clientVersion.moreOrEqual(Version.V1_20_3)) {
                 writePacket(PacketSnapshots.PACKET_START_WAITING_CHUNKS);
 
-                for (PacketSnapshot chunk : PacketSnapshots.PACKETS_EMPTY_CHUNKS) {
-                    writePacket(chunk);
-                }
+                writePackets(PacketSnapshots.PACKETS_EMPTY_CHUNKS);
             }
 
             sendKeepAlive();
@@ -201,14 +200,30 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
             writePacket(PacketSnapshots.PACKET_PLUGIN_MESSAGE);
 
         if (clientVersion.moreOrEqual(Version.V1_20_5)) {
-            for (PacketSnapshot packet : PacketSnapshots.PACKETS_REGISTRY_DATA) {
-                writePacket(packet);
+            writePacket(PacketSnapshots.PACKET_KNOWN_PACKS);
+
+            if (clientVersion.moreOrEqual(Version.V1_21_4)) {
+                writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_4);
+            } else if (clientVersion.moreOrEqual(Version.V1_21_2)) {
+                writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_2);
+            } else if (clientVersion.moreOrEqual(Version.V1_21)) {
+                writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21);
+            } else if (clientVersion.moreOrEqual(Version.V1_20_5)) {
+                writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_20_5);
             }
+
+            writePacket(PacketSnapshots.PACKET_UPDATE_TAGS);
         } else {
             writePacket(PacketSnapshots.PACKET_REGISTRY_DATA);
         }
 
         sendPacket(PacketSnapshots.PACKET_FINISH_CONFIGURATION);
+    }
+
+    private void writePackets(List<PacketSnapshot> packets) {
+        for (PacketSnapshot packet : packets) {
+            writePacket(packet);
+        }
     }
 
     public void disconnectLogin(String reason) {

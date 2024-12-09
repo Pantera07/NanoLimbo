@@ -23,19 +23,17 @@ import net.kyori.adventure.nbt.ListBinaryTag;
 import ua.nanit.limbo.LimboConstants;
 import ua.nanit.limbo.protocol.PacketSnapshot;
 import ua.nanit.limbo.protocol.packets.configuration.PacketFinishConfiguration;
+import ua.nanit.limbo.protocol.packets.configuration.PacketKnownPacks;
 import ua.nanit.limbo.protocol.packets.configuration.PacketRegistryData;
+import ua.nanit.limbo.protocol.packets.configuration.PacketUpdateTags;
 import ua.nanit.limbo.protocol.packets.login.PacketLoginSuccess;
 import ua.nanit.limbo.protocol.packets.play.*;
 import ua.nanit.limbo.server.LimboServer;
 import ua.nanit.limbo.server.data.Title;
 import ua.nanit.limbo.util.NbtMessageUtil;
 import ua.nanit.limbo.util.UuidUtil;
-import ua.nanit.limbo.world.Dimension;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class PacketSnapshots {
@@ -64,13 +62,21 @@ public final class PacketSnapshots {
     public static PacketSnapshot PACKET_TITLE_LEGACY_TIMES;
 
     public static PacketSnapshot PACKET_REGISTRY_DATA;
-    public static List<PacketSnapshot> PACKETS_REGISTRY_DATA;
+
+    public static PacketSnapshot PACKET_KNOWN_PACKS;
+    public static PacketSnapshot PACKET_UPDATE_TAGS;
+    public static List<PacketSnapshot> PACKETS_REGISTRY_DATA_1_20_5;
+    public static List<PacketSnapshot> PACKETS_REGISTRY_DATA_1_21;
+    public static List<PacketSnapshot> PACKETS_REGISTRY_DATA_1_21_2;
+    public static List<PacketSnapshot> PACKETS_REGISTRY_DATA_1_21_4;
+
     public static PacketSnapshot PACKET_FINISH_CONFIGURATION;
 
     public static List<PacketSnapshot> PACKETS_EMPTY_CHUNKS;
     public static PacketSnapshot PACKET_START_WAITING_CHUNKS;
 
-    private PacketSnapshots() { }
+    private PacketSnapshots() {
+    }
 
     public static void initPackets(LimboServer server) {
         final String username = server.getConfig().getPingData().getVersion();
@@ -81,7 +87,7 @@ public final class PacketSnapshots {
         loginSuccess.setUuid(uuid);
 
         PacketJoinGame joinGame = new PacketJoinGame();
-        String worldName = "minecraft:" + server.getConfig().getDimensionType().toLowerCase();
+        String worldName = "minecraft:" + server.getConfig().getDimensionType().toLowerCase(Locale.ROOT);
         joinGame.setEntityId(0);
         joinGame.setEnableRespawnScreen(true);
         joinGame.setFlat(false);
@@ -137,7 +143,7 @@ public final class PacketSnapshots {
             PACKET_HEADER_AND_FOOTER = PacketSnapshot.of(header);
         }
 
-        if (server.getConfig().isUseBrandName()){
+        if (server.getConfig().isUseBrandName()) {
             PacketPluginMessage pluginMessage = new PacketPluginMessage();
             pluginMessage.setChannel(LimboConstants.BRAND_CHANNEL);
             pluginMessage.setMessage(server.getConfig().getBrandName());
@@ -194,41 +200,23 @@ public final class PacketSnapshots {
             PACKET_TITLE_LEGACY_TIMES = PacketSnapshot.of(legacyTimes);
         }
 
+        PacketKnownPacks packetKnownPacks = new PacketKnownPacks();
+        PACKET_KNOWN_PACKS = PacketSnapshot.of(packetKnownPacks);
+
+        PacketUpdateTags packetUpdateTags = new PacketUpdateTags();
+        packetUpdateTags.setTags(server.getDimensionRegistry().getTags_1_20_5());
+
+        PACKET_UPDATE_TAGS = PacketSnapshot.of(packetUpdateTags);
+
         PacketRegistryData packetRegistryData = new PacketRegistryData();
         packetRegistryData.setDimensionRegistry(server.getDimensionRegistry());
 
         PACKET_REGISTRY_DATA = PacketSnapshot.of(packetRegistryData);
 
-        Dimension dimension1_21 = server.getDimensionRegistry().getDimension_1_21();
-        List<PacketSnapshot> packetRegistries = new ArrayList<>();
-        CompoundBinaryTag dimensionTag = dimension1_21.getData();
-        for (String registryType : dimensionTag.keySet()) {
-            CompoundBinaryTag compoundRegistryType = dimensionTag.getCompound(registryType);
-
-            PacketRegistryData registryData = new PacketRegistryData();
-            registryData.setDimensionRegistry(server.getDimensionRegistry());
-
-            ListBinaryTag values = compoundRegistryType.getList("value");
-            registryData.setMetadataWriter((message, version) -> {
-                message.writeString(registryType);
-
-                message.writeVarInt(values.size());
-                for (BinaryTag entry : values) {
-                    CompoundBinaryTag entryTag = (CompoundBinaryTag) entry;
-
-                    String name = entryTag.getString("name");
-                    CompoundBinaryTag element = entryTag.getCompound("element");
-
-                    message.writeString(name);
-                    message.writeBoolean(true);
-                    message.writeNamelessCompoundTag(element);
-                }
-            });
-
-            packetRegistries.add(PacketSnapshot.of(registryData));
-        }
-
-        PACKETS_REGISTRY_DATA = packetRegistries;
+        PACKETS_REGISTRY_DATA_1_20_5 = createRegistryData(server, server.getDimensionRegistry().getCodec_1_20_5());
+        PACKETS_REGISTRY_DATA_1_21 = createRegistryData(server, server.getDimensionRegistry().getCodec_1_21());
+        PACKETS_REGISTRY_DATA_1_21_2 = createRegistryData(server, server.getDimensionRegistry().getCodec_1_21_2());
+        PACKETS_REGISTRY_DATA_1_21_4 = createRegistryData(server, server.getDimensionRegistry().getCodec_1_21_4());
 
         PACKET_FINISH_CONFIGURATION = PacketSnapshot.of(new PacketFinishConfiguration());
 
@@ -253,5 +241,40 @@ public final class PacketSnapshots {
             }
         }
         PACKETS_EMPTY_CHUNKS = emptyChunks;
+    }
+
+    private static List<PacketSnapshot> createRegistryData(LimboServer server, CompoundBinaryTag dimensionTag) {
+        List<PacketSnapshot> packetRegistries = new ArrayList<>();
+        for (String registryType : dimensionTag.keySet()) {
+            CompoundBinaryTag compoundRegistryType = dimensionTag.getCompound(registryType);
+
+            PacketRegistryData registryData = new PacketRegistryData();
+            registryData.setDimensionRegistry(server.getDimensionRegistry());
+
+            ListBinaryTag values = compoundRegistryType.getList("value");
+            registryData.setMetadataWriter((message, version) -> {
+                message.writeString(registryType);
+
+                message.writeVarInt(values.size());
+                for (BinaryTag entry : values) {
+                    CompoundBinaryTag entryTag = (CompoundBinaryTag) entry;
+
+                    String name = entryTag.getString("name");
+                    CompoundBinaryTag element = entryTag.getCompound("element", null);
+
+                    message.writeString(name);
+                    if (element != null) {
+                        message.writeBoolean(true);
+                        message.writeNamelessCompoundTag(element);
+                    } else {
+                        message.writeBoolean(false);
+                    }
+                }
+            });
+
+            packetRegistries.add(PacketSnapshot.of(registryData));
+        }
+
+        return packetRegistries;
     }
 }
