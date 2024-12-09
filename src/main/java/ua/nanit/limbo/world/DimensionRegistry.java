@@ -147,7 +147,7 @@ public final class DimensionRegistry {
         defaultDimension_1_16 = getDefaultDimension(def, codec_1_16);
         defaultDimension_1_18_2 = getDefaultDimension(def, codec_1_18_2);
 
-        dimension_1_20_5 = getModernDimension(def, codec_1_20);
+        dimension_1_20_5 = getModernDimension(def, codec_1_20_5);
         dimension_1_21 = getModernDimension(def, codec_1_21);
         dimension_1_21_2 = getModernDimension(def, codec_1_21_2);
         dimension_1_21_4 = getModernDimension(def, codec_1_21_4);
