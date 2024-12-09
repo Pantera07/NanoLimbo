@@ -33,7 +33,7 @@ public class PacketLoginStart implements PacketIn {
 
     @Override
     public void decode(ByteMessage msg, Version version) {
-        this.username = msg.readString();
+        this.username = msg.readString(16);
     }
 
     @Override
