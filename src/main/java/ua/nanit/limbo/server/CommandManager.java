@@ -13,12 +13,12 @@ public final class CommandManager extends Thread {
     }
 
     public Command getCommand(String name) {
-        return commands.get(name.toLowerCase());
+        return commands.get(name.toLowerCase(Locale.ROOT));
     }
 
     public void register(Command cmd, String... aliases) {
         for (String alias : aliases) {
-            commands.put(alias.toLowerCase(), cmd);
+            commands.put(alias.toLowerCase(Locale.ROOT), cmd);
         }
     }
 
