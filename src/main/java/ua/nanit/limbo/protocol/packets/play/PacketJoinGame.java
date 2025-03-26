@@ -39,7 +39,7 @@ public class PacketJoinGame implements PacketOut {
     private boolean isDebug;
     private boolean isFlat;
     private boolean limitedCrafting;
-    private boolean secureProfile;
+    private boolean secureProfile = true;
 
     public void setEntityId(int entityId) {
         this.entityId = entityId;
