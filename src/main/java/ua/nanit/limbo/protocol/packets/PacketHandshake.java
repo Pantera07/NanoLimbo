@@ -55,7 +55,7 @@ public class PacketHandshake implements PacketIn {
             this.version = Version.UNDEFINED;
         }
 
-        this.host = msg.readString();
+        this.host = msg.readString(261);
         this.port = msg.readUnsignedShort();
         this.nextState = State.getById(msg.readVarInt());
     }
