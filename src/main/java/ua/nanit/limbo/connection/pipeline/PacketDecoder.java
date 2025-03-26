@@ -19,6 +19,7 @@ package ua.nanit.limbo.connection.pipeline;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.Packet;
@@ -52,10 +53,15 @@ public class PacketDecoder extends MessageToMessageDecoder<ByteBuf> {
                 packet.decode(msg, version);
             } catch (Exception e) {
                 if (Log.isDebug()) {
-                    Log.warning("Cannot decode packet 0x%s", e, Integer.toHexString(packetId));
-                } else {
                     Log.warning("Cannot decode packet 0x%s: %s", Integer.toHexString(packetId), e.getMessage());
                 }
+                throw new DecoderException("Error decoding packet 0x" + Integer.toHexString(packetId), e);
+            }
+
+            // Make sure the packet does not have any bytes left after we've decoded it
+            if (buf.isReadable()) {
+                throw new DecoderException("Could not read packet "
+                        + packet + " to end (" + buf.readableBytes() + " bytes left)");
             }
 
             ctx.fireChannelRead(packet);
