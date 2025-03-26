@@ -53,23 +53,29 @@ public class ByteMessage extends ByteBuf {
         return bytes;
     }
 
-    /* Minecraft's protocol methods */
-
     public int readVarInt() {
-        int i = 0;
-        int maxRead = Math.min(5, buf.readableBytes());
+        final int readable = buf.readableBytes();
+        if (readable == 0) {
+            throw new DecoderException("Empty buffer");
+        }
 
-        for (int j = 0; j < maxRead; j++) {
-            int k = buf.readByte();
+        // We can read at least one byte, and this should be a common case
+        int k = buf.readByte();
+        if ((k & 0x80) != 128) {
+            return k;
+        }
+
+        // In case decoding one byte was not enough, use a loop to decode up to the next 4 bytes
+        final int maxRead = Math.min(5, readable);
+        int i = k & 0x7F;
+        for (int j = 1; j < maxRead; j++) {
+            k = buf.readByte();
             i |= (k & 0x7F) << j * 7;
             if ((k & 0x80) != 128) {
                 return i;
             }
         }
-
-        buf.readBytes(maxRead);
-
-        throw new IllegalArgumentException("Cannot read VarInt");
+        throw new DecoderException("Bad VarInt");
     }
 
     public void writeVarInt(int value) {
