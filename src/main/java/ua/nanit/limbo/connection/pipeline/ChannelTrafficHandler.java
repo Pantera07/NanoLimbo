@@ -35,11 +35,11 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
             if (packetBucket != null) {
                 packetBucket.recordPacket(1, bytes);
-                if (packetBucket.getCurrentPacketRate() > maxPacketRate) {
+                if (maxPacketRate > 0.0 && packetBucket.getCurrentPacketRate() > maxPacketRate) {
                     closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.1f seconds)", ctx.channel().remoteAddress(), packetBucket.sumPackets, (packetBucket.intervalTime / 1000.0));
                     return;
                 }
-                if (packetBucket.getCurrentPacketBytesRate() > maxPacketBytesRate) {
+                if (maxPacketBytesRate > 0.0 && packetBucket.getCurrentPacketBytesRate() > maxPacketBytesRate) {
                     closeConnection(ctx, "Closed %s due to many bytes sent (%d in the last %.1f seconds)", ctx.channel().remoteAddress(), packetBucket.sumBytes, (packetBucket.intervalTime / 1000.0));
                     return;
                 }
