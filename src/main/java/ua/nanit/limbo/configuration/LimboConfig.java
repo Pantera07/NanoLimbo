@@ -279,7 +279,7 @@ public final class LimboConfig {
         return maxPacketRate;
     }
 
-    public double getmaxPacketBytesRate() {
+    public double getMaxPacketBytesRate() {
         return maxPacketBytesRate;
     }
 }
