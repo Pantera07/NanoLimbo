@@ -58,10 +58,12 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
         private static final double NANOSECONDS_TO_MILLISECONDS = 1.0e-6;
         private static final int MILLISECONDS_TO_SECONDS = 1000;
 
+        private static final int PACKETS_IDX = 0;
+        private static final int BYTES_IDX = 1;
+
         private final double intervalTime;
         private final double intervalResolution;
-        private final int[] packetsData;
-        private final int[] bytesData;
+        private final int[][] data;
         private int newestData;
         private double lastBucketTime;
         private int sumPackets;
@@ -70,8 +72,7 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
         public PacketBucket(final double intervalTime, final int totalBuckets) {
             this.intervalTime = intervalTime;
             this.intervalResolution = intervalTime / totalBuckets;
-            this.packetsData = new int[totalBuckets];
-            this.bytesData = new int[totalBuckets];
+            this.data = new int[totalBuckets][2]; // 0: packets, 1: bytes
         }
 
         public void recordPacket(final int packets, final int bytes) {
@@ -83,8 +84,8 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             }
 
             if (timeDelta < this.intervalResolution) {
-                this.packetsData[this.newestData] += packets;
-                this.bytesData[this.newestData] += bytes;
+                this.data[this.newestData][PACKETS_IDX] += packets;
+                this.data[this.newestData][BYTES_IDX] += bytes;
                 this.sumPackets += packets;
                 this.sumBytes += bytes;
                 return;
@@ -93,11 +94,12 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             int bucketsToMove = (int)(timeDelta / this.intervalResolution);
             double nextBucketTime = this.lastBucketTime + bucketsToMove * this.intervalResolution;
 
-            if (bucketsToMove >= this.packetsData.length) {
-                Arrays.fill(this.packetsData, 0);
-                Arrays.fill(this.bytesData, 0);
-                this.packetsData[0] = packets;
-                this.bytesData[0] = bytes;
+            if (bucketsToMove >= this.data.length) {
+                for (int i = 0; i < this.data.length; i++) {
+                    Arrays.fill(this.data[i], 0);
+                }
+                this.data[0][PACKETS_IDX] = packets;
+                this.data[0][BYTES_IDX] = bytes;
                 this.sumPackets = packets;
                 this.sumBytes = bytes;
                 this.newestData = 0;
@@ -106,18 +108,18 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             }
 
             for (int i = 1; i < bucketsToMove; ++i) {
-                int index = (this.newestData + i) % this.packetsData.length;
-                this.sumPackets -= this.packetsData[index];
-                this.sumBytes -= this.bytesData[index];
-                this.packetsData[index] = 0;
-                this.bytesData[index] = 0;
+                int index = (this.newestData + i) % this.data.length;
+                this.sumPackets -= this.data[index][PACKETS_IDX];
+                this.sumBytes -= this.data[index][BYTES_IDX];
+                this.data[index][PACKETS_IDX] = 0;
+                this.data[index][BYTES_IDX] = 0;
             }
 
-            int newestDataIndex = (this.newestData + bucketsToMove) % this.packetsData.length;
-            this.sumPackets += packets - this.packetsData[newestDataIndex];
-            this.sumBytes += bytes - this.bytesData[newestDataIndex];
-            this.packetsData[newestDataIndex] = packets;
-            this.bytesData[newestDataIndex] = bytes;
+            int newestDataIndex = (this.newestData + bucketsToMove) % this.data.length;
+            this.sumPackets += packets - this.data[newestDataIndex][PACKETS_IDX];
+            this.sumBytes += bytes - this.data[newestDataIndex][BYTES_IDX];
+            this.data[newestDataIndex][PACKETS_IDX] = packets;
+            this.data[newestDataIndex][BYTES_IDX] = bytes;
             this.newestData = newestDataIndex;
             this.lastBucketTime = nextBucketTime;
         }
