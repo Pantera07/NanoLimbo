@@ -131,3 +131,7 @@ traffic:
   # It is measured over the configured interval
   # Ignored if -1.0
   maxPacketRate: 500.0
+  # The maximum total packet bytes allowed over the configured interval
+  # This is measured by summing the sizes of all packets during the interval
+  # Ignored if -1
+  maxPacketBytesPerInterval: 1024
