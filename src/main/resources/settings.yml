@@ -131,3 +131,7 @@ traffic:
   # It is measured over the configured interval
   # Ignored if -1.0
   maxPacketRate: 500.0
+  # The maximum packet bytes per second for players
+  # It is measured over the configured interval as an average bytes/sec
+  # Ignored if -1.0
+  maxPacketBytesRate: 2048.0
