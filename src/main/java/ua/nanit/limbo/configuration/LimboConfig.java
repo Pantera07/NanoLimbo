@@ -46,6 +46,7 @@ public final class LimboConfig {
 
     private String dimensionType;
     private int gameMode;
+    private boolean secureProfile;
 
     private boolean useBrandName;
     private boolean useJoinMessage;
@@ -75,6 +76,7 @@ public final class LimboConfig {
     private int maxPacketSize;
     private double interval;
     private double maxPacketRate;
+    private double maxPacketBytesRate;
 
     public LimboConfig(Path root) {
         this.root = root;
@@ -100,6 +102,7 @@ public final class LimboConfig {
             dimensionType = "the_end";
         }
         gameMode = conf.node("gameMode").getInt();
+        secureProfile = conf.node("secureProfile").getBoolean();
         useBrandName = conf.node("brandName", "enable").getBoolean();
         useJoinMessage = conf.node("joinMessage", "enable").getBoolean();
         useBossBar = conf.node("bossBar", "enable").getBoolean();
@@ -137,6 +140,7 @@ public final class LimboConfig {
         maxPacketSize = conf.node("traffic", "maxPacketSize").getInt(-1);
         interval = conf.node("traffic", "interval").getDouble(-1.0);
         maxPacketRate = conf.node("traffic", "maxPacketRate").getDouble(-1.0);
+        maxPacketBytesRate = conf.node("traffic", "maxPacketBytesRate").getDouble(-1.0);
     }
 
     private BufferedReader getReader() throws IOException {
@@ -183,6 +187,10 @@ public final class LimboConfig {
 
     public int getGameMode() {
         return gameMode;
+    }
+
+    public boolean isSecureProfile() {
+        return secureProfile;
     }
 
     public InfoForwarding getInfoForwarding() {
@@ -275,5 +283,9 @@ public final class LimboConfig {
 
     public double getMaxPacketRate() {
         return maxPacketRate;
+    }
+
+    public double getMaxPacketBytesRate() {
+        return maxPacketBytesRate;
     }
 }

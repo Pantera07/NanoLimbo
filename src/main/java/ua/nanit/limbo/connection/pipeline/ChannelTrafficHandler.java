@@ -12,18 +12,19 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
     private final int maxPacketSize;
     private final double maxPacketRate;
+    private final double maxPacketBytesRate;
     private final PacketBucket packetBucket;
 
-    public ChannelTrafficHandler(int maxPacketSize, double interval, double maxPacketRate) {
+    public ChannelTrafficHandler(int maxPacketSize, double interval, double maxPacketRate, double maxPacketBytesRate) {
         this.maxPacketSize = maxPacketSize;
         this.maxPacketRate = maxPacketRate;
-        this.packetBucket = (interval > 0.0 && maxPacketRate > 0.0) ? new PacketBucket(interval * 1000.0, 150) : null;
+        this.maxPacketBytesRate = maxPacketBytesRate;
+        this.packetBucket = (interval > 0.0 && (maxPacketRate > 0.0 || maxPacketBytesRate > 0.0)) ? new PacketBucket(interval * 1000.0, 150) : null;
     }
 
     @Override
     public void channelRead(@NotNull ChannelHandlerContext ctx, @NotNull Object msg) throws Exception {
-        if (msg instanceof ByteBuf) {
-            ByteBuf in = (ByteBuf) msg;
+        if (msg instanceof ByteBuf in) {
             int bytes = in.readableBytes();
 
             if (maxPacketSize > 0 && bytes > maxPacketSize) {
@@ -32,9 +33,13 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             }
 
             if (packetBucket != null) {
-                packetBucket.incrementPackets(1);
-                if (packetBucket.getCurrentPacketRate() > maxPacketRate) {
-                    closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.1f seconds)", ctx.channel().remoteAddress(), packetBucket.sum, (packetBucket.intervalTime / 1000.0));
+                packetBucket.recordPacket(1, bytes);
+                if (maxPacketRate > 0.0 && packetBucket.getCurrentPacketRate() > maxPacketRate) {
+                    closeConnection(ctx, "Closed %s due to many packets sent (%d in the last %.1f seconds)", ctx.channel().remoteAddress(), packetBucket.sumPackets, (packetBucket.intervalTime / 1000.0));
+                    return;
+                }
+                if (maxPacketBytesRate > 0.0 && packetBucket.getCurrentPacketBytesRate() > maxPacketBytesRate) {
+                    closeConnection(ctx, "Closed %s due to many bytes sent (%d in the last %.1f seconds)", ctx.channel().remoteAddress(), packetBucket.sumBytes, (packetBucket.intervalTime / 1000.0));
                     return;
                 }
             }
@@ -52,20 +57,24 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
         private static final double NANOSECONDS_TO_MILLISECONDS = 1.0e-6;
         private static final int MILLISECONDS_TO_SECONDS = 1000;
 
+        private static final int PACKETS_IDX = 0;
+        private static final int BYTES_IDX = 1;
+
         private final double intervalTime;
         private final double intervalResolution;
-        private final int[] data;
+        private final int[][] data;
         private int newestData;
         private double lastBucketTime;
-        private int sum;
+        private int sumPackets;
+        private int sumBytes;
 
         public PacketBucket(final double intervalTime, final int totalBuckets) {
             this.intervalTime = intervalTime;
             this.intervalResolution = intervalTime / totalBuckets;
-            this.data = new int[totalBuckets];
+            this.data = new int[totalBuckets][2]; // 0: packets, 1: bytes
         }
 
-        public void incrementPackets(final int packets) {
+        public void recordPacket(final int packets, final int bytes) {
             double timeMs = System.nanoTime() * NANOSECONDS_TO_MILLISECONDS;
             double timeDelta = timeMs - this.lastBucketTime;
 
@@ -74,8 +83,10 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             }
 
             if (timeDelta < this.intervalResolution) {
-                this.data[this.newestData] += packets;
-                this.sum += packets;
+                this.data[this.newestData][PACKETS_IDX] += packets;
+                this.data[this.newestData][BYTES_IDX] += bytes;
+                this.sumPackets += packets;
+                this.sumBytes += bytes;
                 return;
             }
 
@@ -83,9 +94,13 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
             double nextBucketTime = this.lastBucketTime + bucketsToMove * this.intervalResolution;
 
             if (bucketsToMove >= this.data.length) {
-                Arrays.fill(this.data, 0);
-                this.data[0] = packets;
-                this.sum = packets;
+                for (int[] datum : this.data) {
+                    Arrays.fill(datum, 0);
+                }
+                this.data[0][PACKETS_IDX] = packets;
+                this.data[0][BYTES_IDX] = bytes;
+                this.sumPackets = packets;
+                this.sumBytes = bytes;
                 this.newestData = 0;
                 this.lastBucketTime = timeMs;
                 return;
@@ -93,19 +108,27 @@ public class ChannelTrafficHandler extends ChannelInboundHandlerAdapter {
 
             for (int i = 1; i < bucketsToMove; ++i) {
                 int index = (this.newestData + i) % this.data.length;
-                this.sum -= this.data[index];
-                this.data[index] = 0;
+                this.sumPackets -= this.data[index][PACKETS_IDX];
+                this.sumBytes -= this.data[index][BYTES_IDX];
+                this.data[index][PACKETS_IDX] = 0;
+                this.data[index][BYTES_IDX] = 0;
             }
 
             int newestDataIndex = (this.newestData + bucketsToMove) % this.data.length;
-            this.sum += packets - this.data[newestDataIndex];
-            this.data[newestDataIndex] = packets;
+            this.sumPackets += packets - this.data[newestDataIndex][PACKETS_IDX];
+            this.sumBytes += bytes - this.data[newestDataIndex][BYTES_IDX];
+            this.data[newestDataIndex][PACKETS_IDX] = packets;
+            this.data[newestDataIndex][BYTES_IDX] = bytes;
             this.newestData = newestDataIndex;
             this.lastBucketTime = nextBucketTime;
         }
 
         public double getCurrentPacketRate() {
-            return this.sum / (this.intervalTime / MILLISECONDS_TO_SECONDS);
+            return this.sumPackets / (this.intervalTime / MILLISECONDS_TO_SECONDS);
+        }
+
+        public double getCurrentPacketBytesRate() {
+            return this.sumBytes / (this.intervalTime / MILLISECONDS_TO_SECONDS);
         }
     }
 }

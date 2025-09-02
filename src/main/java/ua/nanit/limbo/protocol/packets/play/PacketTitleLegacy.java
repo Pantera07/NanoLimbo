@@ -52,18 +52,16 @@ public class PacketTitleLegacy implements PacketOut {
         msg.writeVarInt(action.getId(version));
 
         switch (action) {
-            case SET_TITLE:
-                title.encode(msg, version);
-                break;
-            case SET_SUBTITLE:
-                subtitle.encode(msg, version);
-                break;
-            case SET_TIMES_AND_DISPLAY:
-                times.encode(msg, version);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid title action: " + action);
+            case SET_TITLE -> title.encode(msg, version);
+            case SET_SUBTITLE -> subtitle.encode(msg, version);
+            case SET_TIMES_AND_DISPLAY -> times.encode(msg, version);
+            default -> throw new IllegalArgumentException("Invalid title action: " + action);
         }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
     public enum Action {

@@ -70,18 +70,13 @@ public final class Log {
     }
 
     private static ch.qos.logback.classic.Level convertLevel(int level) {
-        switch (level) {
-            case 0:
-                return ch.qos.logback.classic.Level.ERROR;
-            case 1:
-                return ch.qos.logback.classic.Level.WARN;
-            case 2:
-                return ch.qos.logback.classic.Level.INFO;
-            case 3:
-                return ch.qos.logback.classic.Level.DEBUG;
-            default:
-                throw new IllegalStateException("Undefined log level: " + level);
-        }
+        return switch (level) {
+            case 0 -> ch.qos.logback.classic.Level.ERROR;
+            case 1 -> ch.qos.logback.classic.Level.WARN;
+            case 2 -> ch.qos.logback.classic.Level.INFO;
+            case 3 -> ch.qos.logback.classic.Level.DEBUG;
+            default -> throw new IllegalStateException("Undefined log level: " + level);
+        };
     }
 
     public enum Level {

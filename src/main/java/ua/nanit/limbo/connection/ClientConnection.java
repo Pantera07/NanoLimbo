@@ -45,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +105,9 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         if (channel.isActive()) {
-            Log.error("Unhandled exception: ", cause);
+            Log.error("Encountered exception", cause);
+
+            ctx.close();
         }
     }
 
@@ -179,9 +182,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
             if (clientVersion.moreOrEqual(Version.V1_20_3)) {
                 writePacket(PacketSnapshots.PACKET_START_WAITING_CHUNKS);
 
-                for (PacketSnapshot chunk : PacketSnapshots.PACKETS_EMPTY_CHUNKS) {
-                    writePacket(chunk);
-                }
+                writePackets(PacketSnapshots.PACKETS_EMPTY_CHUNKS);
             }
 
             sendKeepAlive();
@@ -197,18 +198,46 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
     public void onLoginAcknowledgedReceived() {
         updateState(State.CONFIGURATION);
 
-        if (PacketSnapshots.PACKET_PLUGIN_MESSAGE != null)
+        if (PacketSnapshots.PACKET_PLUGIN_MESSAGE != null) {
             writePacket(PacketSnapshots.PACKET_PLUGIN_MESSAGE);
-
-        if (clientVersion.moreOrEqual(Version.V1_20_5)) {
-            for (PacketSnapshot packet : PacketSnapshots.PACKETS_REGISTRY_DATA) {
-                writePacket(packet);
-            }
-        } else {
-            writePacket(PacketSnapshots.PACKET_REGISTRY_DATA);
         }
 
+        if (clientVersion.moreOrEqual(Version.V1_20_5)) {
+            sendPacket(PacketSnapshots.PACKET_KNOWN_PACKS);
+            return;
+        }
+
+        writePacket(PacketSnapshots.PACKET_REGISTRY_DATA);
+
         sendPacket(PacketSnapshots.PACKET_FINISH_CONFIGURATION);
+    }
+
+    public void onKnownPacksReceived() {
+        if (clientVersion.moreOrEqual(Version.V1_21_7)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_7);
+        } else if (clientVersion.moreOrEqual(Version.V1_21_6)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_6);
+        } else if (clientVersion.moreOrEqual(Version.V1_21_5)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_5);
+        } else if (clientVersion.moreOrEqual(Version.V1_21_4)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_4);
+        } else if (clientVersion.moreOrEqual(Version.V1_21_2)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21_2);
+        } else if (clientVersion.moreOrEqual(Version.V1_21)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_21);
+        } else if (clientVersion.moreOrEqual(Version.V1_20_5)) {
+            writePackets(PacketSnapshots.PACKETS_REGISTRY_DATA_1_20_5);
+        }
+
+        writePacket(PacketSnapshots.PACKET_UPDATE_TAGS);
+
+        sendPacket(PacketSnapshots.PACKET_FINISH_CONFIGURATION);
+    }
+
+    private void writePackets(List<PacketSnapshot> packets) {
+        for (PacketSnapshot packet : packets) {
+            writePacket(packet);
+        }
     }
 
     public void disconnectLogin(String reason) {
@@ -297,8 +326,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
         String token = null;
 
         for (Object obj : arr) {
-            if (obj instanceof JsonObject) {
-                JsonObject prop = (JsonObject) obj;
+            if (obj instanceof JsonObject prop) {
                 if (prop.getString("name").equals("bungeeguard-token")) {
                     token = prop.getString("value");
                     break;

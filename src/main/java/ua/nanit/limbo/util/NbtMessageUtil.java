@@ -12,14 +12,13 @@ import java.util.Map;
 public class NbtMessageUtil {
 
     public static NbtMessage create(String json) {
-        BinaryTag compoundBinaryTag = fromJson(JsonParser.parseString(json));
+        CompoundBinaryTag compoundBinaryTag = (CompoundBinaryTag) fromJson(JsonParser.parseString(json));
 
         return new NbtMessage(json, compoundBinaryTag);
     }
 
     public static BinaryTag fromJson(JsonElement json) {
-        if (json instanceof JsonPrimitive) {
-            JsonPrimitive jsonPrimitive = (JsonPrimitive) json;
+        if (json instanceof JsonPrimitive jsonPrimitive) {
             if (jsonPrimitive.isNumber()) {
                 Number number = json.getAsNumber();
 
@@ -57,12 +56,12 @@ public class NbtMessageUtil {
                 return ListBinaryTag.listBinaryTag(EndBinaryTag.endBinaryTag().type(), Collections.emptyList());
             }
 
-            BinaryTagType tagByteType = ByteBinaryTag.ZERO.type();
-            BinaryTagType tagIntType = IntBinaryTag.intBinaryTag(0).type();
-            BinaryTagType tagLongType = LongBinaryTag.longBinaryTag(0).type();
+            BinaryTagType<ByteBinaryTag> tagByteType = ByteBinaryTag.ZERO.type();
+            BinaryTagType<IntBinaryTag> tagIntType = IntBinaryTag.intBinaryTag(0).type();
+            BinaryTagType<LongBinaryTag> tagLongType = LongBinaryTag.longBinaryTag(0).type();
 
             BinaryTag listTag;
-            BinaryTagType listType = fromJson(jsonArray.get(0)).type();
+            BinaryTagType<? extends BinaryTag> listType = fromJson(jsonArray.get(0)).type();
             if (listType.equals(tagByteType)) {
                 byte[] bytes = new byte[jsonArray.size()];
                 for (int i = 0; i < bytes.length; i++) {

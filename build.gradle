@@ -1,19 +1,19 @@
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'com.github.gmazzo.buildconfig' version '3.1.0'
+    id 'com.gradleup.shadow' version '8.3.9'
+    id 'com.github.gmazzo.buildconfig' version '5.6.7'
 }
 
 group 'ua.nanit'
-version '1.8.1'
+version '1.9.8'
 
 compileJava {
     options.encoding = "UTF-8"
 }
 
 tasks.withType(JavaCompile).configureEach {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
@@ -21,25 +21,31 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.3'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.1'
 
-    implementation 'ch.qos.logback:logback-classic:1.5.6'
-    implementation 'org.spongepowered:configurate-yaml:4.1.2'
-    implementation 'io.netty:netty-all:4.1.101.Final'
-    implementation 'net.kyori:adventure-nbt:4.14.0'
-    implementation 'com.grack:nanojson:1.8'
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'ch.qos.logback:logback-classic:1.5.18'
+    implementation 'org.spongepowered:configurate-yaml:4.2.0'
+
+    implementation "io.netty:netty-handler:4.2.4.Final"
+    implementation "io.netty:netty-transport-native-epoll:4.2.4.Final:linux-x86_64"
+    implementation "io.netty:netty-transport-native-epoll:4.2.4.Final:linux-aarch_64"
+
+    implementation 'net.kyori:adventure-nbt:4.24.0'
+    implementation 'com.grack:nanojson:1.10'
+    implementation 'com.google.code.gson:gson:2.13.1'
 }
 
 buildConfig {
     className("BuildConfig")
     packageName("ua.nanit.limbo")
-    buildConfigField('String', 'LIMBO_VERSION', "\"${project.version}\"")
+    buildConfigField(String, 'LIMBO_VERSION', provider { project.version } )
 }
 
 shadowJar {
     from 'LICENSE'
+
+    archiveClassifier.set("")
 
     manifest {
         attributes('Main-Class': 'ua.nanit.limbo.NanoLimbo')

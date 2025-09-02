@@ -18,13 +18,11 @@
 package ua.nanit.limbo.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.ServerChannel;
+import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.ResourceLeakDetector;
 import ua.nanit.limbo.configuration.LimboConfig;
@@ -35,6 +33,7 @@ import ua.nanit.limbo.connection.PacketSnapshots;
 import ua.nanit.limbo.world.DimensionRegistry;
 
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -82,7 +81,7 @@ public final class LimboServer {
 
         packetHandler = new PacketHandler(this);
         dimensionRegistry = new DimensionRegistry(this);
-        dimensionRegistry.load(config.getDimensionType());
+        dimensionRegistry.load("minecraft:" + config.getDimensionType().toLowerCase(Locale.ROOT));
         connections = new Connections();
 
         PacketSnapshots.initPackets(this);
@@ -103,23 +102,23 @@ public final class LimboServer {
     }
 
     private void startBootstrap() {
-        Class<? extends ServerChannel> channelClass;
+        ChannelFactory<? extends ServerChannel> channelFactory;
 
         if (config.isUseEpoll() && Epoll.isAvailable()) {
-            bossGroup = new EpollEventLoopGroup(config.getBossGroupSize());
-            workerGroup = new EpollEventLoopGroup(config.getWorkerGroupSize());
-            channelClass = EpollServerSocketChannel.class;
+            bossGroup = new MultiThreadIoEventLoopGroup(config.getBossGroupSize(), EpollIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(config.getWorkerGroupSize(), EpollIoHandler.newFactory());
+            channelFactory = EpollServerSocketChannel::new;
             Log.debug("Using Epoll transport type");
         } else {
-            bossGroup = new NioEventLoopGroup(config.getBossGroupSize());
-            workerGroup = new NioEventLoopGroup(config.getWorkerGroupSize());
-            channelClass = NioServerSocketChannel.class;
+            bossGroup = new MultiThreadIoEventLoopGroup(config.getBossGroupSize(), NioIoHandler.newFactory());
+            workerGroup = new MultiThreadIoEventLoopGroup(config.getWorkerGroupSize(), NioIoHandler.newFactory());
+            channelFactory = NioServerSocketChannel::new;
             Log.debug("Using Java NIO transport type");
         }
 
         new ServerBootstrap()
                 .group(bossGroup, workerGroup)
-                .channel(channelClass)
+                .channelFactory(channelFactory)
                 .childHandler(new ClientChannelInitializer(this))
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .localAddress(config.getAddress())

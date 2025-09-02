@@ -44,6 +44,10 @@ headerAndFooter:
 # Spectator works on 1.8+ clients
 gameMode: 3
 
+# Remove secure-chat toast
+# For 1.20.5+ clients
+secureProfile: false
+
 # Server name which is shown under F3
 # For 1.13+ clients
 brandName:
@@ -131,3 +135,7 @@ traffic:
   # It is measured over the configured interval
   # Ignored if -1.0
   maxPacketRate: 500.0
+  # The maximum packet bytes per second for players
+  # It is measured over the configured interval as an average bytes/sec
+  # Ignored if -1.0
+  maxPacketBytesRate: 2048.0
