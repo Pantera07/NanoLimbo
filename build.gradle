@@ -27,9 +27,9 @@ dependencies {
     implementation 'ch.qos.logback:logback-classic:1.5.18'
     implementation 'org.spongepowered:configurate-yaml:4.2.0'
 
-    implementation "io.netty:netty-handler:4.2.4.Final"
-    implementation "io.netty:netty-transport-native-epoll:4.2.4.Final:linux-x86_64"
-    implementation "io.netty:netty-transport-native-epoll:4.2.4.Final:linux-aarch_64"
+    implementation "io.netty:netty-handler:4.2.5.Final"
+    implementation "io.netty:netty-transport-native-epoll:4.2.5.Final:linux-x86_64"
+    implementation "io.netty:netty-transport-native-epoll:4.2.5.Final:linux-aarch_64"
 
     implementation 'net.kyori:adventure-nbt:4.24.0'
     implementation 'com.grack:nanojson:1.10'
