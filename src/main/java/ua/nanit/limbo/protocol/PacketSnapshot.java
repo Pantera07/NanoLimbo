@@ -17,47 +17,57 @@
 
 package ua.nanit.limbo.protocol;
 
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.registry.Version;
 
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * PacketSnapshot encodes a packet to byte array for each MC version.
  * Some versions have the same snapshot, so there are mappings to avoid data copying
  */
+@AllArgsConstructor
 public class PacketSnapshot implements PacketOut {
 
-    private final PacketOut packet;
-    private final Map<Version, byte[]> versionMessages = new HashMap<>();
-    private final Map<Version, Version> mappings = new HashMap<>();
+    private final Class<? extends PacketOut> packetClazz;
+    private final Map<Version, byte[]> versionMessages = new EnumMap<>(Version.class);
+    private final Map<Version, Version> mappings = new EnumMap<>(Version.class);
 
-    public PacketSnapshot(PacketOut packet) {
-        this.packet = packet;
+    @NonNull
+    public Class<? extends PacketOut> getPacketClass() {
+        return this.packetClazz;
     }
 
-    public PacketOut getWrappedPacket() {
-        return packet;
+    public void encode(@NonNull Function<Version, PacketOut> packetComputeFunction) {
+        encode(packetComputeFunction, List.of(Version.values()));
     }
 
-    public void encode() {
+    public void encode(@NonNull Function<Version, PacketOut> packetComputeFunction,
+                       @NonNull List<Version> versions) {
         Map<Integer, Version> hashes = new HashMap<>();
 
-        for (Version version : Version.values()) {
-            if (version.equals(Version.UNDEFINED)) continue;
+        for (Version version : versions) {
+            if (version.equals(Version.UNDEFINED)) {
+                continue;
+            }
 
             ByteMessage encodedMessage = ByteMessage.create();
-            packet.encode(encodedMessage, version);
+            packetComputeFunction.apply(version).encode(encodedMessage, version);
 
             int hash = encodedMessage.hashCode();
             Version hashed = hashes.get(hash);
 
             if (hashed != null) {
-                mappings.put(version, hashed);
+                this.mappings.put(version, hashed);
             } else {
                 hashes.put(hash, version);
-                mappings.put(version, version);
-                versionMessages.put(version, encodedMessage.toByteArray());
+                this.mappings.put(version, version);
+                this.versionMessages.put(version, encodedMessage.toByteArray());
             }
 
             encodedMessage.release();
@@ -65,24 +75,47 @@ public class PacketSnapshot implements PacketOut {
     }
 
     @Override
-    public void encode(ByteMessage msg, Version version) {
-        Version mapped = mappings.get(version);
-        byte[] message = versionMessages.get(mapped);
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        Version mapped = this.mappings.get(version);
+        byte[] message = this.versionMessages.get(mapped);
 
-        if (message != null)
+        if (message != null) {
             msg.writeBytes(message);
-        else
-            throw new IllegalArgumentException("No mappings for version " + version);
+            return;
+        }
+
+        throw new IllegalArgumentException("No mappings for version " + version);
     }
 
     @Override
     public String toString() {
-        return packet.getClass().getSimpleName();
+        return this.packetClazz.getSimpleName();
     }
 
-    public static PacketSnapshot of(PacketOut packet) {
-        PacketSnapshot snapshot = new PacketSnapshot(packet);
-        snapshot.encode();
+    @NonNull
+    public static PacketSnapshot of(@NonNull PacketOut packet) {
+        return of(packet.getClass(), version -> packet);
+    }
+
+    @NonNull
+    public static PacketSnapshot of(@NonNull PacketOut packet, Version version) {
+        return of(packet.getClass(), version2 -> packet, List.of(version));
+    }
+
+    @NonNull
+    public static PacketSnapshot of(@NonNull Class<? extends PacketOut> packetClazz,
+                                    @NonNull Function<Version, PacketOut> packetComputeFunction,
+                                    @NonNull List<Version> versions) {
+        PacketSnapshot snapshot = new PacketSnapshot(packetClazz);
+        snapshot.encode(packetComputeFunction, versions);
+        return snapshot;
+    }
+
+    @NonNull
+    public static PacketSnapshot of(@NonNull Class<? extends PacketOut> packetClazz,
+                                    @NonNull Function<Version, PacketOut> packetComputeFunction) {
+        PacketSnapshot snapshot = new PacketSnapshot(packetClazz);
+        snapshot.encode(packetComputeFunction);
         return snapshot;
     }
 }

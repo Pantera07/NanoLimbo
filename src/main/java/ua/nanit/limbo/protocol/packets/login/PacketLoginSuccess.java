@@ -17,39 +17,38 @@
 
 package ua.nanit.limbo.protocol.packets.login;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
 import java.util.UUID;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketLoginSuccess implements PacketOut {
 
     private UUID uuid;
     private String username;
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     @Override
-    public void encode(ByteMessage msg, Version version) {
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
         if (version.moreOrEqual(Version.V1_16)) {
-            msg.writeUuid(uuid);
+            msg.writeUuid(this.uuid);
         } else if (version.moreOrEqual(Version.V1_7_6)) {
-            msg.writeString(uuid.toString());
+            msg.writeString(this.uuid.toString());
         } else {
-            msg.writeString(uuid.toString().replace("-", ""));
+            msg.writeString(this.uuid.toString().replace("-", ""));
         }
-        msg.writeString(username);
+        msg.writeString(this.username);
         if (version.moreOrEqual(Version.V1_19)) {
             msg.writeVarInt(0);
         }
-        if (version.moreOrEqual(Version.V1_20_5)) {
+        if (version.fromTo(Version.V1_20_5, Version.V1_21)) {
             msg.writeBoolean(true);
         }
     }
@@ -58,5 +57,4 @@ public class PacketLoginSuccess implements PacketOut {
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }

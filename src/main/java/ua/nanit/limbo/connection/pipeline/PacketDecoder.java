@@ -19,23 +19,28 @@ package ua.nanit.limbo.connection.pipeline;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.Packet;
 import ua.nanit.limbo.protocol.registry.State;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.Log;
+import ua.nanit.limbo.util.PacketUtils;
 
 import java.util.List;
 
 public class PacketDecoder extends MessageToMessageDecoder<ByteBuf> {
 
+    private State state;
     private State.PacketRegistry mappings;
     private Version version;
 
     public PacketDecoder() {
         updateVersion(Version.getMin());
-        updateState(State.HANDSHAKING);
+        this.state = State.HANDSHAKING;
+        updateState(this.state);
     }
 
     @Override
@@ -45,30 +50,32 @@ public class PacketDecoder extends MessageToMessageDecoder<ByteBuf> {
         ByteMessage msg = new ByteMessage(buf);
         int packetId = msg.readVarInt();
         Packet packet = mappings.getPacket(packetId);
-
-        if (packet != null) {
-            Log.debug("Received packet %s[0x%s] (%d bytes)", packet.toString(), Integer.toHexString(packetId), msg.readableBytes());
-            try {
-                packet.decode(msg, version);
-            } catch (Exception e) {
-                if (Log.isDebug()) {
-                    Log.warning("Cannot decode packet 0x%s", e, Integer.toHexString(packetId));
-                } else {
-                    Log.warning("Cannot decode packet 0x%s: %s", Integer.toHexString(packetId), e.getMessage());
-                }
-            }
-
-            ctx.fireChannelRead(packet);
-        } else {
-            Log.debug("Undefined incoming packet: 0x" + Integer.toHexString(packetId));
+        if (packet == null) {
+            Log.debug("Undefined incoming packet: " + PacketUtils.toPacketId(packetId) + " [" + version + "|" + state + "]");
+            return;
         }
+
+        Log.debug("Received packet %s(%s) [%s|%s] (%d bytes)", packet.toString(), PacketUtils.toPacketId(packetId), version, state, msg.readableBytes());
+
+        try {
+            packet.decode(msg, version);
+        } catch (Exception e) {
+            throw new DecoderException("Cannot decode packet " + PacketUtils.toDetailedInfo(packet, packetId, version, state), e);
+        }
+
+        if (buf.isReadable()) {
+            throw new DecoderException("Packet " + PacketUtils.toDetailedInfo(packet, packetId, version, state) + " larger than expected, extra bytes: " + msg.readableBytes());
+        }
+
+        ctx.fireChannelRead(packet);
     }
 
-    public void updateVersion(Version version) {
+    public void updateVersion(@NonNull Version version) {
         this.version = version;
     }
 
-    public void updateState(State state) {
+    public void updateState(@NonNull State state) {
+        this.state = state;
         this.mappings = state.serverBound.getRegistry(version);
     }
 }

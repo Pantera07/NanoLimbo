@@ -17,6 +17,10 @@
 
 package ua.nanit.limbo.protocol.packets.play;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
@@ -26,31 +30,30 @@ import java.util.List;
 /**
  * Packet for 1.13+
  */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketDeclareCommands implements PacketOut {
 
     private List<String> commands;
 
-    public void setCommands(List<String> commands) {
-        this.commands = commands;
-    }
-
     @Override
-    public void encode(ByteMessage msg, Version version) {
-        msg.writeVarInt(commands.size() * 2 + 1); // +1 because declaring root node
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        msg.writeVarInt(this.commands.size() * 2 + 1); // +1 because declaring root node
 
         // Declare root node
 
         msg.writeByte(0);
-        msg.writeVarInt(commands.size());
+        msg.writeVarInt(this.commands.size());
 
-        for (int i = 1; i <= commands.size() * 2; i++) {
+        for (int i = 1; i <= this.commands.size() * 2; i++) {
             msg.writeVarInt(i++);
         }
 
         // Declare other commands
 
         int i = 1;
-        for (String cmd : commands) {
+        for (String cmd : this.commands) {
             msg.writeByte(1 | 0x04);
             msg.writeVarInt(1);
             msg.writeVarInt(i + 1);
@@ -70,4 +73,8 @@ public class PacketDeclareCommands implements PacketOut {
         msg.writeVarInt(0);
     }
 
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

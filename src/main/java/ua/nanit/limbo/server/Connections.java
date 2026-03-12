@@ -17,6 +17,7 @@
 
 package ua.nanit.limbo.server;
 
+import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 
 import java.util.Collection;
@@ -27,28 +28,25 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class Connections {
 
-    private final Map<UUID, ClientConnection> connections;
+    private final Map<UUID, ClientConnection> connections = new ConcurrentHashMap<>();
 
-    public Connections() {
-        connections = new ConcurrentHashMap<>();
-    }
-
+    @NonNull
     public Collection<ClientConnection> getAllConnections() {
         return Collections.unmodifiableCollection(connections.values());
     }
 
     public int getCount() {
-        return connections.size();
+        return this.connections.size();
     }
 
-    public void addConnection(ClientConnection connection) {
-        connections.put(connection.getUuid(), connection);
+    public void addConnection(@NonNull ClientConnection connection) {
+        this.connections.put(connection.getUuid(), connection);
         Log.info("Player %s connected (%s) [%s]", connection.getUsername(),
                 connection.getAddress(), connection.getClientVersion());
     }
 
-    public void removeConnection(ClientConnection connection) {
-        connections.remove(connection.getUuid());
+    public void removeConnection(@NonNull ClientConnection connection) {
+        this.connections.remove(connection.getUuid());
         Log.info("Player %s disconnected", connection.getUsername());
     }
 }

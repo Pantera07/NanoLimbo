@@ -12,9 +12,10 @@ General features:
 * Doesn't spawn threads per player. Use a fixed thread pool.
 * Support for **BungeeCord** and **Velocity** info forwarding.
 * Support for [BungeeGuard](https://www.spigotmc.org/resources/79601/) handshake format.
+* Support for [MiniMessage](https://docs.papermc.io/adventure/minimessage/format/) text format.
 * Multiple versions support.
 * Fully configurable.
-* Lightweight. App size around **3MB**.
+* Lightweight. App size around **5MB**.
 
 ![](https://i.imgur.com/sT8p1Gz.png)
 
@@ -36,7 +37,7 @@ Symbol `X` means all minor versions.
 - [x] 1.18.X
 - [x] 1.19.X
 - [x] 1.20.X
-- [x] 1.21
+- [x] 1.21.X
 
 The server **doesn't** support snapshots.
 
@@ -45,20 +46,21 @@ The server **doesn't** support snapshots.
 * `help` - Show help message
 * `conn` - Display number of connections
 * `mem` - Display memory usage stats
+* `version` - Display limbo version
 * `stop` - Stop the server
 
 Note that the server also will be closed correctly if you just press `Ctrl+C`.
 
 ### Installation
 
-Required software: JRE 11+
+Required software: JRE 17+
 
 The installation process is simple.
 
-1. Download the latest version of the program [**here**](https://github.com/Nan1t/NanoLimbo/releases).
+1. Download the latest version of the program [**here**](https://github.com/BoomEaro/NanoLimbo/releases).
 2. Put the jar file in the folder you want.
 3. Create a start script as you did for Bukkit or BungeeCord, with a command like this:
-   `java -jar NanoLimbo-<version>.jar`
+   `java -jar NanoLimbo.jar`
 4. The server will create `settings.yml` file, which is the server configuration. 
 5. Configure it as you want and restart the server.
 
@@ -85,8 +87,8 @@ to add some functionality that is suitable for a limbo server and won't signific
 
 Required software:
 
-* JDK 11+
-* Gradle 7+ (optional)
+* JDK 17+
+* Gradle 9+ (optional)
 
 To build a minimized jar, go to the project root directory and run in the terminal:
 

@@ -17,21 +17,23 @@
 
 package ua.nanit.limbo.protocol.packets.status;
 
+import lombok.Data;
+import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketIn;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 
+@Data
 public class PacketStatusRequest implements PacketIn {
 
     @Override
-    public void decode(ByteMessage msg, Version version) {
-
+    public void decode(@NonNull ByteMessage msg, @NonNull Version version) {
     }
 
     @Override
-    public void handle(ClientConnection conn, LimboServer server) {
+    public void handle(@NonNull ClientConnection conn, @NonNull LimboServer server) {
         server.getPacketHandler().handle(conn, this);
     }
 
