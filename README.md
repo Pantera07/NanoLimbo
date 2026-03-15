@@ -93,7 +93,7 @@ Required software:
 To build a minimized jar, go to the project root directory and run in the terminal:
 
 ```
-./gradlew shadowJar
+./gradlew build
 ```
 
 ### Contacts

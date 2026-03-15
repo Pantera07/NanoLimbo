@@ -41,6 +41,10 @@ tasks.compileJava {
     options.encoding = "UTF-8"
 }
 
+tasks.build {
+    dependsOn("shadowJar")
+}
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
