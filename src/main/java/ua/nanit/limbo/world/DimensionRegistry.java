@@ -161,7 +161,7 @@ public final class DimensionRegistry {
 
                 int id = dimensionTag.getInt("id");
                 if (elementTag != null) {
-                    int height = elementTag.getInt("logical_height");
+                    int height = elementTag.getInt("height");
                     return new Dimension(dimensionKey, id, height, codec, elementTag);
                 }
             }
@@ -177,7 +177,7 @@ public final class DimensionRegistry {
         BiFunction<Integer, CompoundBinaryTag, Dimension> findLegacyDimension = (index, dimensionTag) -> {
             String name = dimensionTag.getString("name");
             if (name.equals(dimensionKey.toString())) {
-                int height = dimensionTag.getInt("logical_height");
+                int height = dimensionTag.getInt("height");
                 return new Dimension(dimensionKey, index, height, codec, dimensionTag);
             }
 
