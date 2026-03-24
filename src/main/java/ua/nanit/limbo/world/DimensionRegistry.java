@@ -55,6 +55,7 @@ public final class DimensionRegistry {
     private CompoundBinaryTag codec_1_21_7;
     private CompoundBinaryTag codec_1_21_9;
     private CompoundBinaryTag codec_1_21_11;
+    private CompoundBinaryTag codec_26_1;
 
     private CompoundBinaryTag tags_1_20_5;
     private CompoundBinaryTag tags_1_21;
@@ -65,6 +66,7 @@ public final class DimensionRegistry {
     private CompoundBinaryTag tags_1_21_7;
     private CompoundBinaryTag tags_1_21_9;
     private CompoundBinaryTag tags_1_21_11;
+    private CompoundBinaryTag tags_26_1;
 
     public void load() throws IOException {
         codec_1_16 = readCompoundBinaryTag("/dimension/codec_1_16.nbt");
@@ -84,6 +86,7 @@ public final class DimensionRegistry {
         codec_1_21_7 = readCompoundBinaryTag("/dimension/codec_1_21_7.nbt");
         codec_1_21_9 = readCompoundBinaryTag("/dimension/codec_1_21_9.nbt");
         codec_1_21_11 = readCompoundBinaryTag("/dimension/codec_1_21_11.nbt");
+        codec_26_1 = readCompoundBinaryTag("/dimension/codec_26_1.nbt");
 
         tags_1_20_5 = readCompoundBinaryTag("/dimension/tags_1_20_5.nbt");
         tags_1_21 = readCompoundBinaryTag("/dimension/tags_1_21.nbt");
@@ -94,6 +97,7 @@ public final class DimensionRegistry {
         tags_1_21_7 = readCompoundBinaryTag("/dimension/tags_1_21_7.nbt");
         tags_1_21_9 = readCompoundBinaryTag("/dimension/tags_1_21_9.nbt");
         tags_1_21_11 = readCompoundBinaryTag("/dimension/tags_1_21_11.nbt");
+        tags_26_1 = readCompoundBinaryTag("/dimension/tags_26_1.nbt");
     }
 
     @NonNull
@@ -108,7 +112,9 @@ public final class DimensionRegistry {
 
     @NonNull
     private CompoundBinaryTag getRegistryByVersion(@NonNull Version version) {
-        if (version.moreOrEqual(Version.V1_21_11)) {
+        if (version.moreOrEqual(Version.V26_1)) {
+            return this.codec_26_1;
+        } else if (version.moreOrEqual(Version.V1_21_11)) {
             return this.codec_1_21_11;
         } else if (version.equals(Version.V1_21_9)) {
             return this.codec_1_21_9;
@@ -264,7 +270,9 @@ public final class DimensionRegistry {
 
     @NonNull
     public Map<String, Map<String, List<Integer>>> createUpdateTags(@NonNull Version version) {
-        if (version.moreOrEqual(Version.V1_21_11)) {
+        if (version.moreOrEqual(Version.V26_1)) {
+            return parseUpdateTags(this.tags_26_1);
+        } else if (version.moreOrEqual(Version.V1_21_11)) {
             return parseUpdateTags(this.tags_1_21_11);
         } else if (version.equals(Version.V1_21_9)) {
             return parseUpdateTags(this.tags_1_21_9);

@@ -78,6 +78,9 @@ public class PacketChunkWithLight implements PacketOut {
                                               @NonNull PaletteFactory biomesPalette) {
         ByteMessage buf = new ByteMessage(ByteBufAllocator.DEFAULT.heapBuffer());
         buf.writeShort(0); // no empty blocks count
+        if (version.moreOrEqual(Version.V26_1)) {
+            buf.writeShort(0); // fluid count
+        }
         long[] storage = new long[0];
         writePalette(buf, version, blocksPalette, storage);
         writePalette(buf, version, biomesPalette, storage);

@@ -78,7 +78,7 @@ public class PacketSnapshots {
 
     public static PacketSnapshot PACKET_FINISH_CONFIGURATION;
 
-    public static List<PacketSnapshot> PACKETS_EMPTY_CHUNKS;
+    public static List<PacketSnapshot> PACKETS_CHUNKS;
     public static PacketSnapshot PACKET_START_WAITING_CHUNKS;
 
     public static void initPackets(@NonNull LimboServer server) {
@@ -275,7 +275,7 @@ public class PacketSnapshots {
         int chunkZOffset = 0; // Default z position is 0
         int chunkEdgeSize = 1;
 
-        List<PacketSnapshot> emptyChunks = new ArrayList<>();
+        List<PacketSnapshot> chunks = new ArrayList<>();
         // Make multiple chunks for edges
         for (int chunkX = chunkXOffset - chunkEdgeSize; chunkX <= chunkXOffset + chunkEdgeSize; ++chunkX) {
             for (int chunkZ = chunkZOffset - chunkEdgeSize; chunkZ <= chunkZOffset + chunkEdgeSize; ++chunkZ) {
@@ -284,10 +284,10 @@ public class PacketSnapshots {
                 packetChunkWithLight.setZ(chunkZ);
                 packetChunkWithLight.setDimension(versionedDimension);
 
-                emptyChunks.add(PacketSnapshot.of(packetChunkWithLight));
+                chunks.add(PacketSnapshot.of(packetChunkWithLight));
             }
         }
-        PACKETS_EMPTY_CHUNKS = emptyChunks;
+        PACKETS_CHUNKS = chunks;
     }
 
     @Nullable

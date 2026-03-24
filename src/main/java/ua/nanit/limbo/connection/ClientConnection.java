@@ -182,7 +182,7 @@ public class ClientConnection extends ChannelInboundHandlerAdapter {
             if (clientVersion.moreOrEqual(Version.V1_20_3)) {
                 writePacket(PacketSnapshots.PACKET_START_WAITING_CHUNKS);
 
-                writePackets(PacketSnapshots.PACKETS_EMPTY_CHUNKS);
+                writePackets(PacketSnapshots.PACKETS_CHUNKS);
             }
 
             sendKeepAlive();
