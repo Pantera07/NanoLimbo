@@ -17,28 +17,36 @@
 
 package ua.nanit.limbo.protocol.packets.status;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 import ua.nanit.limbo.protocol.ByteMessage;
-import ua.nanit.limbo.protocol.Packet;
+import ua.nanit.limbo.protocol.PacketIn;
+import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 
-public class PacketStatusPing implements Packet {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PacketStatusPing implements PacketIn, PacketOut {
 
     private long randomId;
 
     @Override
-    public void encode(ByteMessage msg, Version version) {
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
         msg.writeLong(randomId);
     }
 
     @Override
-    public void decode(ByteMessage msg, Version version) {
+    public void decode(@NonNull ByteMessage msg, @NonNull Version version) {
         this.randomId = msg.readLong();
     }
 
     @Override
-    public void handle(ClientConnection conn, LimboServer server) {
+    public void handle(@NonNull ClientConnection conn, @NonNull LimboServer server) {
         server.getPacketHandler().handle(conn, this);
     }
 
@@ -46,5 +54,4 @@ public class PacketStatusPing implements Packet {
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }

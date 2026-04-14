@@ -21,18 +21,16 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import lombok.AllArgsConstructor;
 import ua.nanit.limbo.connection.pipeline.*;
 import ua.nanit.limbo.server.LimboServer;
 
 import java.util.concurrent.TimeUnit;
 
+@AllArgsConstructor
 public class ClientChannelInitializer extends ChannelInitializer<Channel> {
 
     private final LimboServer server;
-
-    public ClientChannelInitializer(LimboServer server) {
-        this.server = server;
-    }
 
     @Override
     protected void initChannel(Channel channel) {
@@ -51,7 +49,8 @@ public class ClientChannelInitializer extends ChannelInitializer<Channel> {
             pipeline.addLast("traffic_limit", new ChannelTrafficHandler(
                     server.getConfig().getMaxPacketSize(),
                     server.getConfig().getInterval(),
-                    server.getConfig().getMaxPacketRate()
+                    server.getConfig().getMaxPacketRate(),
+                    server.getConfig().getMaxPacketBytesRate()
             ));
         }
 
@@ -59,5 +58,4 @@ public class ClientChannelInitializer extends ChannelInitializer<Channel> {
         pipeline.addLast("encoder", encoder);
         pipeline.addLast("handler", connection);
     }
-
 }

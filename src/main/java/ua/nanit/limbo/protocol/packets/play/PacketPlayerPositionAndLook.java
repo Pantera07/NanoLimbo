@@ -17,10 +17,17 @@
 
 package ua.nanit.limbo.protocol.packets.play;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketPlayerPositionAndLook implements PacketOut {
 
     private double x;
@@ -30,24 +37,27 @@ public class PacketPlayerPositionAndLook implements PacketOut {
     private float pitch;
     private int teleportId;
 
-    public PacketPlayerPositionAndLook() {}
+    @Override
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        if (version.moreOrEqual(Version.V1_21_2)) {
+            encodeModern(msg);
+            return;
+        }
 
-    public PacketPlayerPositionAndLook(double x, double y, double z, float yaw, float pitch, int teleportId) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.yaw = yaw;
-        this.pitch = pitch;
-        this.teleportId = teleportId;
+        encodeLegacy(msg, version);
     }
 
     @Override
-    public void encode(ByteMessage msg, Version version) {
-        msg.writeDouble(x);
-        msg.writeDouble(y + (version.less(Version.V1_8) ? 1.62F : 0));
-        msg.writeDouble(z);
-        msg.writeFloat(yaw);
-        msg.writeFloat(pitch);
+    public String toString() {
+        return getClass().getSimpleName();
+    }
+
+    private void encodeLegacy(@NonNull ByteMessage msg, @NonNull Version version) {
+        msg.writeDouble(this.x);
+        msg.writeDouble(this.y + (version.less(Version.V1_8) ? 1.62F : 0));
+        msg.writeDouble(this.z);
+        msg.writeFloat(this.yaw);
+        msg.writeFloat(this.pitch);
 
         if (version.moreOrEqual(Version.V1_8)) {
             msg.writeByte(0x08);
@@ -56,7 +66,7 @@ public class PacketPlayerPositionAndLook implements PacketOut {
         }
 
         if (version.moreOrEqual(Version.V1_9)) {
-            msg.writeVarInt(teleportId);
+            msg.writeVarInt(this.teleportId);
         }
 
         if (version.fromTo(Version.V1_17, Version.V1_19_3)) {
@@ -64,4 +74,20 @@ public class PacketPlayerPositionAndLook implements PacketOut {
         }
     }
 
+    private void encodeModern(@NonNull ByteMessage msg) {
+        msg.writeVarInt(this.teleportId);
+
+        msg.writeDouble(this.x);
+        msg.writeDouble(this.y);
+        msg.writeDouble(this.z);
+
+        msg.writeDouble(0);
+        msg.writeDouble(0);
+        msg.writeDouble(0);
+
+        msg.writeFloat(this.yaw);
+        msg.writeFloat(this.pitch);
+
+        msg.writeInt(0x08);
+    }
 }

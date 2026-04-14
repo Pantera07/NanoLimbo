@@ -17,18 +17,16 @@
 
 package ua.nanit.limbo.protocol;
 
+import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 
 public interface Packet {
 
-    void encode(ByteMessage msg, Version version);
+    void encode(@NonNull ByteMessage msg, @NonNull Version version);
 
-    void decode(ByteMessage msg, Version version);
+    void decode(@NonNull ByteMessage msg, @NonNull Version version);
 
-    default void handle(ClientConnection conn, LimboServer server) {
-        // Ignored by default
-    }
-
+    default void handle(@NonNull ClientConnection conn, @NonNull LimboServer server) {}
 }

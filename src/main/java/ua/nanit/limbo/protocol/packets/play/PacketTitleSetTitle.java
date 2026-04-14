@@ -17,22 +17,29 @@
 
 package ua.nanit.limbo.protocol.packets.play;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+import net.kyori.adventure.text.Component;
 import ua.nanit.limbo.protocol.ByteMessage;
-import ua.nanit.limbo.protocol.NbtMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketTitleSetTitle implements PacketOut {
 
-    private NbtMessage title;
+    private Component title;
 
-    public void setTitle(NbtMessage title) {
-        this.title = title;
+    @Override
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        msg.writeComponent(this.title, version);
     }
 
     @Override
-    public void encode(ByteMessage msg, Version version) {
-        msg.writeNbtMessage(title, version);
+    public String toString() {
+        return getClass().getSimpleName();
     }
-
 }

@@ -17,26 +17,16 @@
 
 package ua.nanit.limbo.connection;
 
+import lombok.Data;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.util.UUID;
 
+@Data
 public class GameProfile {
 
+    @Nullable
     private UUID uuid;
+    @Nullable
     private String username;
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 }

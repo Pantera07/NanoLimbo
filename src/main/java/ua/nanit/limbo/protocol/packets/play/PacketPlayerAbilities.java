@@ -17,33 +17,55 @@
 
 package ua.nanit.limbo.protocol.packets.play;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketOut;
 import ua.nanit.limbo.protocol.registry.Version;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketPlayerAbilities implements PacketOut {
 
-    private int flags = 0x02;
+    private static final int FLAG_INVINCIBLE = 0x01;
+    private static final int FLAG_FLYING = 0x02;
+    private static final int FLAG_CAN_FLY = 0x04;
+    private static final int FLAG_CREATIVE = 0x08;
+
+    private boolean invincible;
+    private boolean canFly;
+    private boolean flying;
+    private boolean creative;
+
     private float flyingSpeed = 0.0F;
     private float fieldOfView = 0.1F;
 
-    public void setFlags(int flags) {
-        this.flags = flags;
-    }
+    @Override
+    public void encode(@NonNull ByteMessage msg, @NonNull Version version) {
+        int flags = 0;
+        if (this.invincible) {
+            flags |= FLAG_INVINCIBLE;
+        }
+        if (this.canFly) {
+            flags |= FLAG_CAN_FLY;
+        }
+        if (this.flying) {
+            flags |= FLAG_FLYING;
+        }
+        if (this.creative) {
+            flags |= FLAG_CREATIVE;
+        }
 
-    public void setFlyingSpeed(float flyingSpeed) {
-        this.flyingSpeed = flyingSpeed;
-    }
-
-    public void setFieldOfView(float fieldOfView) {
-        this.fieldOfView = fieldOfView;
+        msg.writeByte(flags);
+        msg.writeFloat(this.flyingSpeed);
+        msg.writeFloat(this.fieldOfView);
     }
 
     @Override
-    public void encode(ByteMessage msg, Version version) {
-        msg.writeByte(flags);
-        msg.writeFloat(flyingSpeed);
-        msg.writeFloat(fieldOfView);
+    public String toString() {
+        return getClass().getSimpleName();
     }
-
 }

@@ -18,9 +18,15 @@
 package ua.nanit.limbo.connection;
 
 import io.netty.buffer.Unpooled;
+import lombok.AllArgsConstructor;
+import lombok.NonNull;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import ua.nanit.limbo.LimboConstants;
+import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.packets.PacketHandshake;
 import ua.nanit.limbo.protocol.packets.configuration.PacketFinishConfiguration;
+import ua.nanit.limbo.protocol.packets.configuration.PacketKnownPacks;
 import ua.nanit.limbo.protocol.packets.login.PacketLoginAcknowledged;
 import ua.nanit.limbo.protocol.packets.login.PacketLoginPluginRequest;
 import ua.nanit.limbo.protocol.packets.login.PacketLoginPluginResponse;
@@ -28,113 +34,171 @@ import ua.nanit.limbo.protocol.packets.login.PacketLoginStart;
 import ua.nanit.limbo.protocol.packets.status.PacketStatusPing;
 import ua.nanit.limbo.protocol.packets.status.PacketStatusRequest;
 import ua.nanit.limbo.protocol.packets.status.PacketStatusResponse;
+import ua.nanit.limbo.protocol.registry.State;
+import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 import ua.nanit.limbo.server.Log;
-import ua.nanit.limbo.util.UuidUtil;
+import ua.nanit.limbo.util.ComponentUtils;
+import ua.nanit.limbo.util.UUIDUtils;
+import ua.nanit.limbo.util.ForwardingUtils;
 
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+@AllArgsConstructor
 public class PacketHandler {
 
     private final LimboServer server;
 
-    public PacketHandler(LimboServer server) {
-        this.server = server;
-    }
-
-    public void handle(ClientConnection conn, PacketHandshake packet) {
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketHandshake packet) {
         conn.updateVersion(packet.getVersion());
-        conn.updateState(packet.getNextState());
 
-        Log.debug("Pinged from %s [%s]", conn.getAddress(),
-                conn.getClientVersion().toString());
+        switch (packet.getIntent()) {
+            case STATUS -> {
+                conn.updateState(State.STATUS);
 
-        if (server.getConfig().getInfoForwarding().isLegacy()) {
-            String[] split = packet.getHost().split("\00");
-
-            if (split.length == 3 || split.length == 4) {
-                conn.setAddress(split[1]);
-                conn.getGameProfile().setUuid(UuidUtil.fromString(split[2]));
-            } else {
-                conn.disconnectLogin("You've enabled player info forwarding. You need to connect with proxy");
+                Log.debug("Pinged from %s [%s]", conn.getAddress(), conn.getClientVersion().toString());
             }
-        } else if (server.getConfig().getInfoForwarding().isBungeeGuard()) {
-            if (!conn.checkBungeeGuardHandshake(packet.getHost())) {
-                conn.disconnectLogin("Invalid BungeeGuard token or handshake format");
+            case LOGIN, TRANSFER -> {
+                conn.updateState(State.LOGIN);
+
+                if (!conn.getClientVersion().isSupported()) {
+                    conn.disconnect(Component.text("Unsupported client version", NamedTextColor.RED));
+                    return;
+                }
+
+                if (this.server.getConfig().getInfoForwarding().isLegacy()) {
+                    String[] split = packet.getHost().split("\00");
+
+                    if (split.length == 3 || split.length == 4) {
+                        conn.setAddress(split[1]);
+                        conn.getGameProfile().setUuid(UUIDUtils.fromString(split[2]));
+                    } else {
+                        conn.disconnect(Component.text("You've enabled player info forwarding. You need to connect with proxy", NamedTextColor.RED));
+                    }
+                } else if (this.server.getConfig().getInfoForwarding().isBungeeGuard()) {
+                    if (!ForwardingUtils.checkBungeeGuardHandshake(conn, packet.getHost())) {
+                        conn.disconnect(Component.text("Invalid BungeeGuard token or handshake format", NamedTextColor.RED));
+                    }
+                }
             }
+            default -> conn.disconnect(Component.text("Invalid handshake intent!", NamedTextColor.RED));
         }
     }
 
-    public void handle(ClientConnection conn, PacketStatusRequest packet) {
-        conn.sendPacket(new PacketStatusResponse(server));
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketStatusRequest packet) {
+        int protocol;
+        int staticProtocol = this.server.getConfig().getPingData().getProtocol();
+
+        if (staticProtocol > 0) {
+            protocol = staticProtocol;
+        } else {
+            protocol = this.server.getConfig().getInfoForwarding().isNone()
+                    ? conn.getClientVersion().getProtocolNumber()
+                    : Version.getMax().getProtocolNumber();
+        }
+
+        PacketStatusResponse packetStatusResponse = new PacketStatusResponse();
+        packetStatusResponse.setResponse(createStatusResponse(protocol));
+        conn.sendPacket(packetStatusResponse);
     }
 
-    public void handle(ClientConnection conn, PacketStatusPing packet) {
+    @NonNull
+    private PacketStatusResponse.Response createStatusResponse(int protocol) {
+        Component version = this.server.getConfig().getPingData().getVersion();
+        Component description = this.server.getConfig().getPingData().getDescription();
+
+        PacketStatusResponse.Response response = new PacketStatusResponse.Response();
+        response.setVersion(new PacketStatusResponse.Response.Protocol(ComponentUtils.toLegacyString(version), protocol));
+        response.setPlayers(new PacketStatusResponse.Response.Players(
+                this.server.getConfig().getMaxPlayers(),
+                this.server.getConnections().getCount(),
+                new PacketStatusResponse.Response.PlayerInfo[0]
+        ));
+        response.setDescription(description);
+        return response;
+    }
+
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketStatusPing packet) {
         conn.sendPacketAndClose(packet);
     }
 
-    public void handle(ClientConnection conn, PacketLoginStart packet) {
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketLoginStart packet) {
         if (server.getConfig().getMaxPlayers() > 0 &&
                 server.getConnections().getCount() >= server.getConfig().getMaxPlayers()) {
-            conn.disconnectLogin("Too many players connected");
-            return;
-        }
-
-        if (!conn.getClientVersion().isSupported()) {
-            conn.disconnectLogin("Unsupported client version");
+            conn.disconnect(Component.text("Too many players connected", NamedTextColor.RED));
             return;
         }
 
         if (server.getConfig().getInfoForwarding().isModern()) {
             int loginId = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
-            PacketLoginPluginRequest request = new PacketLoginPluginRequest();
+            ByteMessage msg = new ByteMessage(Unpooled.buffer());
+            try {
+                PacketLoginPluginRequest request = new PacketLoginPluginRequest();
+                request.setMessageId(loginId);
+                request.setChannel(LimboConstants.VELOCITY_INFO_CHANNEL);
+                msg.writeByte(ForwardingUtils.VELOCITY_MAX_SUPPORTED_FORWARDING_VERSION);
+                request.setData(msg);
 
-            request.setMessageId(loginId);
-            request.setChannel(LimboConstants.VELOCITY_INFO_CHANNEL);
-            request.setData(Unpooled.EMPTY_BUFFER);
-
-            conn.setVelocityLoginMessageId(loginId);
-            conn.sendPacket(request);
+                conn.setVelocityLoginMessageId(loginId);
+                conn.sendPacket(request);
+            } finally {
+                msg.release();
+            }
             return;
         }
 
         if (!server.getConfig().getInfoForwarding().isModern()) {
             conn.getGameProfile().setUsername(packet.getUsername());
-            conn.getGameProfile().setUuid(UuidUtil.getOfflineModeUuid(packet.getUsername()));
+            conn.getGameProfile().setUuid(UUIDUtils.getOfflineModeUuid(packet.getUsername()));
         }
 
         conn.fireLoginSuccess();
     }
 
-    public void handle(ClientConnection conn, PacketLoginPluginResponse packet) {
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketLoginPluginResponse packet) {
         if (server.getConfig().getInfoForwarding().isModern()
                 && packet.getMessageId() == conn.getVelocityLoginMessageId()) {
 
             if (!packet.isSuccessful() || packet.getData() == null) {
-                conn.disconnectLogin("You need to connect with Velocity");
+                conn.disconnect(Component.text("You need to connect with Velocity", NamedTextColor.RED));
                 return;
             }
 
-            if (!conn.checkVelocityKeyIntegrity(packet.getData())) {
-                conn.disconnectLogin("Can't verify forwarded player info");
+            ByteMessage msg = packet.getData();
+            if (!ForwardingUtils.checkVelocityKeyIntegrity(conn, msg)) {
+                conn.disconnect(Component.text("Can't verify forwarded player info", NamedTextColor.RED));
                 return;
             }
 
-            // Order is important
-            conn.setAddress(packet.getData().readString());
-            conn.getGameProfile().setUuid(packet.getData().readUuid());
-            conn.getGameProfile().setUsername(packet.getData().readString());
+            int version = msg.readVarInt();
+            if (version > ForwardingUtils.VELOCITY_MAX_SUPPORTED_FORWARDING_VERSION) {
+                conn.disconnect(Component.text("Unsupported forwarding version " + version + ", wanted upto " + ForwardingUtils.VELOCITY_MAX_SUPPORTED_FORWARDING_VERSION, NamedTextColor.RED));
+                return;
+            }
+
+            String address = msg.readString();
+            UUID uuid = msg.readUuid();
+            String userName = msg.readString();
+
+            conn.setAddress(address);
+            GameProfile gameProfile = conn.getGameProfile();
+            gameProfile.setUuid(uuid);
+            gameProfile.setUsername(userName);
 
             conn.fireLoginSuccess();
         }
     }
 
-    public void handle(ClientConnection conn, PacketLoginAcknowledged packet) {
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketLoginAcknowledged packet) {
         conn.onLoginAcknowledgedReceived();
     }
 
-    public void handle(ClientConnection conn, PacketFinishConfiguration packet) {
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketFinishConfiguration packet) {
         conn.spawnPlayer();
     }
 
+    public void handle(@NonNull ClientConnection conn, @NonNull PacketKnownPacks packet) {
+        conn.onKnownPacksReceived();
+    }
 }

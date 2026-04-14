@@ -17,47 +17,45 @@
 
 package ua.nanit.limbo.protocol.packets;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import ua.nanit.limbo.connection.ClientConnection;
 import ua.nanit.limbo.protocol.ByteMessage;
 import ua.nanit.limbo.protocol.PacketIn;
-import ua.nanit.limbo.protocol.registry.State;
 import ua.nanit.limbo.protocol.registry.Version;
 import ua.nanit.limbo.server.LimboServer;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PacketHandshake implements PacketIn {
 
     private Version version;
     private String host;
     private int port;
-    private State nextState;
-
-    public Version getVersion() {
-        return version;
-    }
-
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public State getNextState() {
-        return nextState;
-    }
+    private Intent intent;
 
     @Override
-    public void decode(ByteMessage msg, Version version) {
+    public void decode(@NonNull ByteMessage msg, @NonNull Version version) {
         try {
             this.version = Version.of(msg.readVarInt());
         } catch (IllegalArgumentException e) {
             this.version = Version.UNDEFINED;
         }
-
         this.host = msg.readString();
         this.port = msg.readUnsignedShort();
-        this.nextState = State.getById(msg.readVarInt());
+        try {
+            this.intent = Intent.values()[msg.readVarInt()];
+        } catch (Exception e) {
+            this.intent = Intent.UNDEFINED;
+        }
+    }
+
+    @Override
+    public void handle(@NonNull ClientConnection conn, @NonNull LimboServer server) {
+        server.getPacketHandler().handle(conn, this);
     }
 
     @Override
@@ -65,8 +63,10 @@ public class PacketHandshake implements PacketIn {
         return getClass().getSimpleName();
     }
 
-    @Override
-    public void handle(ClientConnection conn, LimboServer server) {
-        server.getPacketHandler().handle(conn, this);
+    public enum Intent {
+        UNDEFINED,
+        STATUS,
+        LOGIN,
+        TRANSFER
     }
 }

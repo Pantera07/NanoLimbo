@@ -17,29 +17,14 @@
 
 package ua.nanit.limbo.world;
 
+import lombok.NonNull;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
+import ua.nanit.limbo.server.data.NamespacedKey;
 
-public class Dimension {
+public record Dimension(@NonNull NamespacedKey key,
+                        int id,
+                        int height,
+                        @NonNull CompoundBinaryTag codec,
+                        @NonNull CompoundBinaryTag defaultCodec) {
 
-    private final int id;
-    private final String name;
-    private final CompoundBinaryTag data;
-
-    public Dimension(int id, String name, CompoundBinaryTag data) {
-        this.id = id;
-        this.name = name;
-        this.data = data;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public CompoundBinaryTag getData() {
-        return data;
-    }
 }

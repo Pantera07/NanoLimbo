@@ -17,6 +17,9 @@
 
 package ua.nanit.limbo.server;
 
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import ua.nanit.limbo.configuration.LimboConfig;
 import ua.nanit.limbo.connection.ClientConnection;
 
 import java.util.Collection;
@@ -25,30 +28,32 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@RequiredArgsConstructor
 public final class Connections {
 
-    private final Map<UUID, ClientConnection> connections;
+    private static final String REDACTED_ADDRESS = "<redacted>";
 
-    public Connections() {
-        connections = new ConcurrentHashMap<>();
-    }
+    private final LimboConfig config;
+    private final Map<UUID, ClientConnection> connections = new ConcurrentHashMap<>();
 
+    @NonNull
     public Collection<ClientConnection> getAllConnections() {
         return Collections.unmodifiableCollection(connections.values());
     }
 
     public int getCount() {
-        return connections.size();
+        return this.connections.size();
     }
 
-    public void addConnection(ClientConnection connection) {
-        connections.put(connection.getUuid(), connection);
+    public void addConnection(@NonNull ClientConnection connection) {
+        this.connections.put(connection.getUuid(), connection);
+        Object address = config.isLogPlayersIp() ? connection.getAddress() : REDACTED_ADDRESS;
         Log.info("Player %s connected (%s) [%s]", connection.getUsername(),
-                connection.getAddress(), connection.getClientVersion());
+                address, connection.getClientVersion());
     }
 
-    public void removeConnection(ClientConnection connection) {
-        connections.remove(connection.getUuid());
+    public void removeConnection(@NonNull ClientConnection connection) {
+        this.connections.remove(connection.getUuid());
         Log.info("Player %s disconnected", connection.getUsername());
     }
 }
