@@ -168,7 +168,7 @@ public final class LimboConfig {
                 .register(TransportType.class, new TransportTypeSerializer())
                 .register(DimensionType.class, new DimensionTypeSerializer())
                 .register(NamespacedKey.class, new NamespacedKeySerializer())
-                .register(InfoForwarding.class, new InfoForwardingSerializer())
+                .register(InfoForwarding.class, new InfoForwardingSerializer(root))
                 .register(PingData.class, new PingDataSerializer())
                 .register(BossBar.class, new BossBarSerializer())
                 .register(Title.class, new TitleSerializer())

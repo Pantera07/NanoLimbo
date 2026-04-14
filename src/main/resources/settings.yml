@@ -92,6 +92,16 @@ title:
 #  - MODERN
 #  - BUNGEE_GUARD
 # Don't use secret if you do not use MODERN type
+#
+# Both `secret` and `tokens` accept the '@' prefix to load the value from an
+# external file (path is relative to the working directory). Useful when you
+# want to keep credentials out of settings.yml - e.g. Docker secrets or SOPS.
+# Examples:
+#   secret: '@secret.txt'
+#   tokens: '@tokens.txt'        # one token per line, '#' comments allowed
+#   tokens:
+#     - 'inline-token'
+#     - '@extra-tokens.txt'      # mixed inline + file list is supported
 infoForwarding:
   type: NONE
   secret: "<YOUR_SECRET_HERE>"
