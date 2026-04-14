@@ -72,6 +72,7 @@ public final class LimboConfig {
     private InfoForwarding infoForwarding;
     private long readTimeout;
     private int debugLevel;
+    private boolean logPlayersIp;
 
     private TransportType transportType;
     private int bossGroupSize;
@@ -130,6 +131,7 @@ public final class LimboConfig {
         infoForwarding = conf.node("infoForwarding").get(InfoForwarding.class);
         readTimeout = conf.node("readTimeout").getLong(30000);
         debugLevel = conf.node("debugLevel").getInt(2);
+        logPlayersIp = conf.node("logPlayersIp").getBoolean(true);
 
         transportType = conf.node("netty", "transportType").get(TransportType.class, TransportType.EPOLL);
         bossGroupSize = conf.node("netty", "threads", "bossGroup").getInt(1);

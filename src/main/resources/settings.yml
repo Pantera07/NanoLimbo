@@ -111,6 +111,10 @@ infoForwarding:
 # Read timeout for connections in milliseconds
 readTimeout: 30000
 
+# Log player IP addresses on connect.
+# Set to false to redact addresses (shown as "<redacted>") for privacy/GDPR.
+logPlayersIp: true
+
 # Define log level. For production, I'd recommend to use level 2
 # Log levels:
 # 0 - Display only errors
