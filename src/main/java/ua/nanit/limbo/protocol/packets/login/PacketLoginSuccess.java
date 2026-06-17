@@ -51,7 +51,7 @@ public class PacketLoginSuccess implements PacketOut {
         if (version.fromTo(Version.V1_20_5, Version.V1_21)) {
             msg.writeBoolean(true);
         }
-        if (version.moreOrEqual(Version.V26_2))
+        if (version.moreOrEqual(Version.V26_2)) {
             msg.writeUuid(UUID.randomUUID()); 
         }
     }
