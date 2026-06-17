@@ -149,7 +149,7 @@ public class PacketLogin implements PacketOut {
         if (version.moreOrEqual(Version.V1_20_5)) {
             msg.writeBoolean(this.secureProfile);
         }
-        if (version.moreOrEqual(Version.V26_2))
+        if (version.moreOrEqual(Version.V26_2)) {
             msg.writeBoolean(this.onlineMode); 
         }
     }
