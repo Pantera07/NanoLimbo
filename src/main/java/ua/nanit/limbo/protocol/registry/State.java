@@ -285,7 +285,7 @@ public enum State {
                     map(0x41, V1_21_5, V1_21_7),
                     map(0x46, V1_21_9, V1_21_11),
                     map(0x48, V26_1, V26_2),
-                    map(0x49, V26_3, Version.getMax())             
+                    map(0x49, V26_3, Version.getMax())
             );
             clientBound.register(PacketKeepAlive::new,
                     map(0x00, V1_7_2, V1_8),
@@ -466,7 +466,7 @@ public enum State {
                     map(0x27, V1_21_5, V1_21_7),
                     map(0x2C, V1_21_9, V1_21_11),
                     map(0x2D, V26_1, V26_2),
-                    map(0x2E, V26_3, Version.getMax())      
+                    map(0x2E, V26_3, Version.getMax())
             );
         }
     };
