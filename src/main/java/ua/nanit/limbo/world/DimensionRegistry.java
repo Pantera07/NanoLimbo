@@ -122,7 +122,7 @@ public final class DimensionRegistry {
     private CompoundBinaryTag getRegistryByVersion(@NonNull Version version) {
         if (version.moreOrEqual(Version.V26_3)) {
             return this.codec_26_3;
-        } else if (version.moreOrEqual(Version.V26_2) {
+        } else if (version.moreOrEqual(Version.V26_2)) {
             return this.codec_26_2;
         } else if (version.moreOrEqual(Version.V26_1)) {
             return this.codec_26_1;
