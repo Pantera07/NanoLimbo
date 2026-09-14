@@ -141,6 +141,7 @@ public class PacketLogin implements PacketOut {
             } else {
                 msg.writeByte(this.gameMode);
                 msg.writeByte(this.previousGameMode);
+            }
         }
         if (version.moreOrEqual(Version.V1_16)) {
             msg.writeBoolean(this.debug);
