@@ -265,7 +265,7 @@ public class ByteMessage extends ByteBuf {
         }
 
         try (ByteBufOutputStream stream = new ByteBufOutputStream(buf);
-             java.io.DataOutputStream dos = new java.io.DataOutputStream(stream)) {
+            java.io.DataOutputStream dos = new java.io.DataOutputStream(stream)) {
             net.kyori.adventure.nbt.BinaryTagType type = tag.type();
             if (version.moreOrEqual(Version.V1_20_2)) {
                 dos.writeByte(type.id());
