@@ -270,9 +270,9 @@ public final class DimensionRegistry {
                 BinaryTag element = entryTag.get("element");
 
                 msg.writeString(name);
-                if (element instanceof CompoundBinaryTag elementTag) {
+                if (element != null) {
                     msg.writeBoolean(true);
-                    msg.writeCompoundTag(elementTag, version);
+                    msg.writeTag(element, version);
                 } else {
                     msg.writeBoolean(false);
                 }
