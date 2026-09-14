@@ -120,11 +120,13 @@ public enum State {
             );
             clientBound.register(
                     PacketKnownPacks::new,
-                    map(0x0E, V1_20_5, Version.getMax())
+                    map(0x0E, V1_20_5, V26_2),
+                    map(0x0F, V26_3, Version.getMax())
             );
             clientBound.register(
                     PacketUpdateTags::new,
-                    map(0x0D, V1_20_5, Version.getMax())
+                    map(0x0D, V1_20_5, V26_2),
+                    map(0x0E, V26_3, Version.getMax())
             );
             clientBound.register(
                     PacketRegistryData::new,
