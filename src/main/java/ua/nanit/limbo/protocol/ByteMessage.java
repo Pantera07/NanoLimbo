@@ -24,7 +24,9 @@ import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
+import net.kyori.adventure.nbt.BinaryTag;
 import net.kyori.adventure.nbt.BinaryTagIO;
+import net.kyori.adventure.nbt.BinaryTagType;
 import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -270,15 +272,10 @@ public class ByteMessage extends ByteBuf {
         }
     }
 
-    public void writeTag(@NonNull net.kyori.adventure.nbt.BinaryTag tag, @NonNull Version version) {
-        if (tag instanceof CompoundBinaryTag compound) {
-            writeCompoundTag(compound, version);
-            return;
-        }
-
+    public void writeTag(@NonNull BinaryTag tag, @NonNull Version version) {
         try (ByteBufOutputStream stream = new ByteBufOutputStream(buf);
-            java.io.DataOutputStream dos = new java.io.DataOutputStream(stream)) {
-            net.kyori.adventure.nbt.BinaryTagType type = tag.type();
+             java.io.DataOutputStream dos = new java.io.DataOutputStream(stream)) {
+            BinaryTagType type = tag.type();
             if (version.moreOrEqual(Version.V1_20_2)) {
                 dos.writeByte(type.id());
                 type.write(tag, dos);
