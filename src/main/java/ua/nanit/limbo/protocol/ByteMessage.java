@@ -215,6 +215,18 @@ public class ByteMessage extends ByteBuf {
         writeLongArray((bitSet != null ? bitSet.toLongArray() : null));
     }
 
+    public void writeBitSet(BitSet bitSet, @NonNull Version version) {
+        if (version.moreOrEqual(Version.V26_3)) {
+            if (bitSet == null || bitSet.isEmpty()) {
+                writeVarInt(0);
+                return;
+            }
+            writeBytesArray(bitSet.toByteArray());
+        } else {
+            writeBitSet(bitSet);
+        }
+    }
+
     public void writeCompoundTagArray(CompoundBinaryTag[] compoundTags) {
         try (ByteBufOutputStream stream = new ByteBufOutputStream(buf)) {
             writeVarInt(compoundTags.length);
